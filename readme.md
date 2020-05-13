@@ -11,7 +11,53 @@ desec is a Go client library for accessing the deSEC API.
 ## Examples
 
 ```go
-TODO
+package main
+
+import (
+	"fmt"
+	"testing"
+
+	"github.com/nrdcg/desec"
+)
+
+func main() {
+	client := desec.NewClient("token")
+
+	newDomain, err := client.Domains.Create("example.com")
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Println(newDomain)
+}
+```
+
+```go
+package main
+
+import (
+	"fmt"
+	"testing"
+
+	"github.com/nrdcg/desec"
+)
+
+func main() {
+	client := desec.NewAccountClient()
+	registration := desec.Registration{
+		Email:    "email@example.com",
+		Password: "secret",
+		Captcha: &desec.Captcha{
+			ID:       "00010203-0405-0607-0809-0a0b0c0d0e0f",
+			Solution: "12H45",
+		},
+	}
+	
+	err := client.Register(registration)
+	if err != nil {
+		panic(err)
+	}
+}
 ```
 
 ## API Documentation
