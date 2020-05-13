@@ -15,7 +15,6 @@ package main
 
 import (
 	"fmt"
-	"testing"
 
 	"github.com/nrdcg/desec"
 )
@@ -37,7 +36,6 @@ package main
 
 import (
 	"fmt"
-	"testing"
 
 	"github.com/nrdcg/desec"
 )
