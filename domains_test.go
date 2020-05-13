@@ -40,7 +40,7 @@ func TestDomainsService_Create(t *testing.T) {
 		}
 	})
 
-	newDomains, err := client.Domains.Create("example.com")
+	newDomain, err := client.Domains.Create("example.com")
 	require.NoError(t, err)
 
 	expected := &Domain{
@@ -62,7 +62,7 @@ func TestDomainsService_Create(t *testing.T) {
 		Created:   mustParseTime("2018-09-18T16:36:16.510368Z"),
 		Published: mustParseTime("2018-09-18T17:21:38.348112Z"),
 	}
-	assert.Equal(t, expected, newDomains)
+	assert.Equal(t, expected, newDomain)
 }
 
 func TestDomainsService_Delete(t *testing.T) {
