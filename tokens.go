@@ -47,6 +47,8 @@ func (s *TokensService) GetAll() ([]Token, error) {
 		return nil, fmt.Errorf("failed to call API: %w", err)
 	}
 
+	defer func() { _ = resp.Body.Close() }()
+
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read response body: %w", err)
@@ -91,6 +93,8 @@ func (s *TokensService) Create(name string) (*Token, error) {
 		return nil, fmt.Errorf("failed to call API: %w", err)
 	}
 
+	defer func() { _ = resp.Body.Close() }()
+
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read response body: %w", err)
@@ -128,6 +132,8 @@ func (s *TokensService) Delete(tokenID string) error {
 	if err != nil {
 		return fmt.Errorf("failed to call API: %w", err)
 	}
+
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusNoContent {
 		body, _ := ioutil.ReadAll(resp.Body)

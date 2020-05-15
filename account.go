@@ -148,6 +148,8 @@ func (s *AccountClient) ObtainCaptcha() (*Captcha, error) {
 		return nil, fmt.Errorf("failed to call API: %w", err)
 	}
 
+	defer func() { _ = resp.Body.Close() }()
+
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read response body: %w", err)
@@ -191,6 +193,8 @@ func (s *AccountClient) Register(registration Registration) error {
 		return fmt.Errorf("failed to call API: %w", err)
 	}
 
+	defer func() { _ = resp.Body.Close() }()
+
 	if resp.StatusCode != http.StatusAccepted {
 		body, _ := ioutil.ReadAll(resp.Body)
 
@@ -220,6 +224,8 @@ func (s *AccountClient) RetrieveInformation(token string) (*Account, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to call API: %w", err)
 	}
+
+	defer func() { _ = resp.Body.Close() }()
 
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
@@ -265,6 +271,8 @@ func (s *AccountClient) PasswordReset(email string, captcha Captcha) error {
 		return fmt.Errorf("failed to call API: %w", err)
 	}
 
+	defer func() { _ = resp.Body.Close() }()
+
 	if resp.StatusCode != http.StatusAccepted {
 		body, _ := ioutil.ReadAll(resp.Body)
 
@@ -299,6 +307,8 @@ func (s *AccountClient) ChangeEmail(email, password string, newEmail string) err
 		return fmt.Errorf("failed to call API: %w", err)
 	}
 
+	defer func() { _ = resp.Body.Close() }()
+
 	if resp.StatusCode != http.StatusAccepted {
 		body, _ := ioutil.ReadAll(resp.Body)
 
@@ -332,6 +342,8 @@ func (s *AccountClient) Delete(email, password string) error {
 	if err != nil {
 		return fmt.Errorf("failed to call API: %w", err)
 	}
+
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusAccepted {
 		body, _ := ioutil.ReadAll(resp.Body)

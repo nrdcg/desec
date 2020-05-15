@@ -35,58 +35,9 @@ type RecordsService struct {
 	token string
 }
 
-// Get gets a RRSet.
-// https://desec.readthedocs.io/en/latest/dns/rrsets.html#retrieving-a-specific-rrset
-func (s *RecordsService) Get(domainName, subName string, recordType string) (*RRSet, error) {
-	if subName == "" {
-		subName = "@"
-	}
-
-	endpoint, err := s.client.createEndpoint("domains", domainName, "rrsets", subName, recordType)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create endpoint: %w", err)
-	}
-
-	req, err := http.NewRequest(http.MethodGet, endpoint.String(), nil)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create request: %w", err)
-	}
-
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", fmt.Sprintf("Token %s", s.token))
-
-	resp, err := s.client.HTTPClient.Do(req)
-	if err != nil {
-		return nil, fmt.Errorf("failed to call API: %w", err)
-	}
-
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read response body: %w", err)
-	}
-
-	if resp.StatusCode == http.StatusNotFound {
-		var notFound NotFound
-		err = json.Unmarshal(body, &notFound)
-		if err != nil {
-			return nil, fmt.Errorf("error: %d: %s", resp.StatusCode, string(body))
-		}
-
-		return nil, &notFound
-	}
-
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("error: %d: %s", resp.StatusCode, string(body))
-	}
-
-	var rrSet RRSet
-	err = json.Unmarshal(body, &rrSet)
-	if err != nil {
-		return nil, fmt.Errorf("failed to umarshal response body: %w", err)
-	}
-
-	return &rrSet, nil
-}
+/*
+	Domains
+*/
 
 // GetAll retrieving all RRsets in a zone.
 // https://desec.readthedocs.io/en/latest/dns/rrsets.html#retrieving-all-rrsets-in-a-zone
@@ -115,6 +66,8 @@ func (s *RecordsService) GetAll(domainName string, filter *RRSetFilter) ([]RRSet
 	if err != nil {
 		return nil, fmt.Errorf("failed to call API: %w", err)
 	}
+
+	defer func() { _ = resp.Body.Close() }()
 
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
@@ -160,6 +113,8 @@ func (s *RecordsService) Create(rrSet RRSet) (*RRSet, error) {
 		return nil, fmt.Errorf("failed to call API: %w", err)
 	}
 
+	defer func() { _ = resp.Body.Close() }()
+
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read response body: %w", err)
@@ -176,6 +131,65 @@ func (s *RecordsService) Create(rrSet RRSet) (*RRSet, error) {
 	}
 
 	return &newRRSet, nil
+}
+
+/*
+	Domains + subname + type
+*/
+
+// Get gets a RRSet.
+// https://desec.readthedocs.io/en/latest/dns/rrsets.html#retrieving-a-specific-rrset
+func (s *RecordsService) Get(domainName, subName string, recordType string) (*RRSet, error) {
+	if subName == "" {
+		subName = "@"
+	}
+
+	endpoint, err := s.client.createEndpoint("domains", domainName, "rrsets", subName, recordType)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create endpoint: %w", err)
+	}
+
+	req, err := http.NewRequest(http.MethodGet, endpoint.String(), nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create request: %w", err)
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", fmt.Sprintf("Token %s", s.token))
+
+	resp, err := s.client.HTTPClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("failed to call API: %w", err)
+	}
+
+	defer func() { _ = resp.Body.Close() }()
+
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read response body: %w", err)
+	}
+
+	if resp.StatusCode == http.StatusNotFound {
+		var notFound NotFound
+		err = json.Unmarshal(body, &notFound)
+		if err != nil {
+			return nil, fmt.Errorf("error: %d: %s", resp.StatusCode, string(body))
+		}
+
+		return nil, &notFound
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("error: %d: %s", resp.StatusCode, string(body))
+	}
+
+	var rrSet RRSet
+	err = json.Unmarshal(body, &rrSet)
+	if err != nil {
+		return nil, fmt.Errorf("failed to umarshal response body: %w", err)
+	}
+
+	return &rrSet, nil
 }
 
 // Update updates RRSet records.
@@ -212,6 +226,8 @@ func (s *RecordsService) Update(domainName string, subName string, recordType st
 	if err != nil {
 		return nil, fmt.Errorf("failed to read response body: %w", err)
 	}
+
+	defer func() { _ = resp.Body.Close() }()
 
 	// when a RRSet is deleted (empty records)
 	if resp.StatusCode == http.StatusNoContent {
@@ -255,6 +271,8 @@ func (s *RecordsService) Delete(domainName string, subName string, recordType st
 	if err != nil {
 		return fmt.Errorf("failed to call API: %w", err)
 	}
+
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusNoContent {
 		body, _ := ioutil.ReadAll(resp.Body)
