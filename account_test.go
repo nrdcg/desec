@@ -16,7 +16,7 @@ func TestAccountClient_ObtainCaptcha(t *testing.T) {
 	server := httptest.NewServer(mux)
 	t.Cleanup(server.Close)
 
-	client := NewAccountClient()
+	client := NewClient("")
 	client.BaseURL = server.URL
 
 	mux.HandleFunc("/captcha/", func(rw http.ResponseWriter, req *http.Request) {
@@ -39,7 +39,7 @@ func TestAccountClient_ObtainCaptcha(t *testing.T) {
 		}
 	})
 
-	captcha, err := client.ObtainCaptcha()
+	captcha, err := client.Account.ObtainCaptcha()
 	require.NoError(t, err)
 
 	expected := &Captcha{
@@ -54,7 +54,7 @@ func TestAccountClient_Register(t *testing.T) {
 	server := httptest.NewServer(mux)
 	t.Cleanup(server.Close)
 
-	client := NewAccountClient()
+	client := NewClient("")
 	client.BaseURL = server.URL
 
 	mux.HandleFunc("/auth/", func(rw http.ResponseWriter, req *http.Request) {
@@ -75,7 +75,7 @@ func TestAccountClient_Register(t *testing.T) {
 		},
 	}
 
-	err := client.Register(registration)
+	err := client.Account.Register(registration)
 	require.NoError(t, err)
 }
 
@@ -84,7 +84,7 @@ func TestAccountClient_Login(t *testing.T) {
 	server := httptest.NewServer(mux)
 	t.Cleanup(server.Close)
 
-	client := NewAccountClient()
+	client := NewClient("")
 	client.BaseURL = server.URL
 
 	mux.HandleFunc("/auth/login/", func(rw http.ResponseWriter, req *http.Request) {
@@ -107,7 +107,7 @@ func TestAccountClient_Login(t *testing.T) {
 		}
 	})
 
-	token, err := client.Login("email@example.com", "secret")
+	token, err := client.Account.Login("email@example.com", "secret")
 	require.NoError(t, err)
 
 	expected := &Token{
@@ -117,6 +117,8 @@ func TestAccountClient_Login(t *testing.T) {
 		Created: mustParseTime("2018-09-06T09:07:43.762697Z"),
 	}
 	assert.Equal(t, expected, token)
+
+	assert.Equal(t, expected.Value, client.token)
 }
 
 func TestAccountClient_Logout(t *testing.T) {
@@ -124,7 +126,7 @@ func TestAccountClient_Logout(t *testing.T) {
 	server := httptest.NewServer(mux)
 	t.Cleanup(server.Close)
 
-	client := NewAccountClient()
+	client := NewClient("f07Q0TRmEb-CRWPe4h64_iV2jbet")
 	client.BaseURL = server.URL
 
 	mux.HandleFunc("/auth/logout/", func(rw http.ResponseWriter, req *http.Request) {
@@ -136,8 +138,10 @@ func TestAccountClient_Logout(t *testing.T) {
 		rw.WriteHeader(http.StatusNoContent)
 	})
 
-	err := client.Logout("f07Q0TRmEb-CRWPe4h64_iV2jbet")
+	err := client.Account.Logout()
 	require.NoError(t, err)
+
+	assert.Empty(t, client.token)
 }
 
 func TestAccountClient_RetrieveInformation(t *testing.T) {
@@ -145,7 +149,7 @@ func TestAccountClient_RetrieveInformation(t *testing.T) {
 	server := httptest.NewServer(mux)
 	t.Cleanup(server.Close)
 
-	client := NewAccountClient()
+	client := NewClient("f07Q0TRmEb-CRWPe4h64_iV2jbet")
 	client.BaseURL = server.URL
 
 	mux.HandleFunc("/auth/account/", func(rw http.ResponseWriter, req *http.Request) {
@@ -168,7 +172,7 @@ func TestAccountClient_RetrieveInformation(t *testing.T) {
 		}
 	})
 
-	account, err := client.RetrieveInformation("f07Q0TRmEb-CRWPe4h64_iV2jbet")
+	account, err := client.Account.RetrieveInformation()
 	require.NoError(t, err)
 
 	expected := &Account{
@@ -184,7 +188,7 @@ func TestAccountClient_PasswordReset(t *testing.T) {
 	server := httptest.NewServer(mux)
 	t.Cleanup(server.Close)
 
-	client := NewAccountClient()
+	client := NewClient("")
 	client.BaseURL = server.URL
 
 	mux.HandleFunc("/", func(rw http.ResponseWriter, req *http.Request) {
@@ -201,7 +205,7 @@ func TestAccountClient_PasswordReset(t *testing.T) {
 		Solution: "12H45",
 	}
 
-	err := client.PasswordReset("email@example.com", captcha)
+	err := client.Account.PasswordReset("email@example.com", captcha)
 	require.NoError(t, err)
 }
 
@@ -210,7 +214,7 @@ func TestAccountClient_ChangeEmail(t *testing.T) {
 	server := httptest.NewServer(mux)
 	t.Cleanup(server.Close)
 
-	client := NewAccountClient()
+	client := NewClient("")
 	client.BaseURL = server.URL
 
 	mux.HandleFunc("/", func(rw http.ResponseWriter, req *http.Request) {
@@ -222,7 +226,7 @@ func TestAccountClient_ChangeEmail(t *testing.T) {
 		rw.WriteHeader(http.StatusAccepted)
 	})
 
-	err := client.ChangeEmail("email@example.com", "secret", "newemail@example.com")
+	err := client.Account.ChangeEmail("email@example.com", "secret", "newemail@example.com")
 	require.NoError(t, err)
 }
 
@@ -231,7 +235,7 @@ func TestAccountClient_Delete(t *testing.T) {
 	server := httptest.NewServer(mux)
 	t.Cleanup(server.Close)
 
-	client := NewAccountClient()
+	client := NewClient("")
 	client.BaseURL = server.URL
 
 	mux.HandleFunc("/auth/account/delete/", func(rw http.ResponseWriter, req *http.Request) {
@@ -243,6 +247,6 @@ func TestAccountClient_Delete(t *testing.T) {
 		rw.WriteHeader(http.StatusAccepted)
 	})
 
-	err := client.Delete("email@example.com", "secret")
+	err := client.Account.Delete("email@example.com", "secret")
 	require.NoError(t, err)
 }

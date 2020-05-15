@@ -1,10 +1,7 @@
 package desec
 
 import (
-	"bytes"
-	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"time"
 )
@@ -31,8 +28,6 @@ type RRSetFilter struct {
 // https://desec.readthedocs.io/en/latest/dns/rrsets.html
 type RecordsService struct {
 	client *Client
-
-	token string
 }
 
 /*
@@ -54,13 +49,10 @@ func (s *RecordsService) GetAll(domainName string, filter *RRSetFilter) ([]RRSet
 		endpoint.RawQuery = query.Encode()
 	}
 
-	req, err := http.NewRequest(http.MethodGet, endpoint.String(), nil)
+	req, err := s.client.newRequest(http.MethodGet, endpoint, nil)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create request: %w", err)
+		return nil, err
 	}
-
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", fmt.Sprintf("Token %s", s.token))
 
 	resp, err := s.client.HTTPClient.Do(req)
 	if err != nil {
@@ -69,19 +61,14 @@ func (s *RecordsService) GetAll(domainName string, filter *RRSetFilter) ([]RRSet
 
 	defer func() { _ = resp.Body.Close() }()
 
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read response body: %w", err)
-	}
-
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("error: %d: %s", resp.StatusCode, string(body))
+		return nil, handleError(resp)
 	}
 
 	var rrSets []RRSet
-	err = json.Unmarshal(body, &rrSets)
+	err = handleResponse(resp, &rrSets)
 	if err != nil {
-		return nil, fmt.Errorf("failed to umarshal response body: %w", err)
+		return nil, err
 	}
 
 	return rrSets, nil
@@ -95,18 +82,10 @@ func (s *RecordsService) Create(rrSet RRSet) (*RRSet, error) {
 		return nil, fmt.Errorf("failed to create endpoint: %w", err)
 	}
 
-	raw, err := json.Marshal(rrSet)
+	req, err := s.client.newRequest(http.MethodPost, endpoint, rrSet)
 	if err != nil {
-		return nil, fmt.Errorf("failed to marshal request body: %w", err)
+		return nil, err
 	}
-
-	req, err := http.NewRequest(http.MethodPost, endpoint.String(), bytes.NewReader(raw))
-	if err != nil {
-		return nil, fmt.Errorf("failed to create request: %w", err)
-	}
-
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", fmt.Sprintf("Token %s", s.token))
 
 	resp, err := s.client.HTTPClient.Do(req)
 	if err != nil {
@@ -115,19 +94,14 @@ func (s *RecordsService) Create(rrSet RRSet) (*RRSet, error) {
 
 	defer func() { _ = resp.Body.Close() }()
 
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read response body: %w", err)
-	}
-
 	if resp.StatusCode != http.StatusCreated {
-		return nil, fmt.Errorf("error: %d: %s", resp.StatusCode, string(body))
+		return nil, handleError(resp)
 	}
 
 	var newRRSet RRSet
-	err = json.Unmarshal(body, &newRRSet)
+	err = handleResponse(resp, &newRRSet)
 	if err != nil {
-		return nil, fmt.Errorf("failed to umarshal response body: %w", err)
+		return nil, err
 	}
 
 	return &newRRSet, nil
@@ -149,13 +123,10 @@ func (s *RecordsService) Get(domainName, subName string, recordType string) (*RR
 		return nil, fmt.Errorf("failed to create endpoint: %w", err)
 	}
 
-	req, err := http.NewRequest(http.MethodGet, endpoint.String(), nil)
+	req, err := s.client.newRequest(http.MethodGet, endpoint, nil)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create request: %w", err)
+		return nil, err
 	}
-
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", fmt.Sprintf("Token %s", s.token))
 
 	resp, err := s.client.HTTPClient.Do(req)
 	if err != nil {
@@ -164,29 +135,14 @@ func (s *RecordsService) Get(domainName, subName string, recordType string) (*RR
 
 	defer func() { _ = resp.Body.Close() }()
 
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read response body: %w", err)
-	}
-
-	if resp.StatusCode == http.StatusNotFound {
-		var notFound NotFound
-		err = json.Unmarshal(body, &notFound)
-		if err != nil {
-			return nil, fmt.Errorf("error: %d: %s", resp.StatusCode, string(body))
-		}
-
-		return nil, &notFound
-	}
-
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("error: %d: %s", resp.StatusCode, string(body))
+		return nil, handleError(resp)
 	}
 
 	var rrSet RRSet
-	err = json.Unmarshal(body, &rrSet)
+	err = handleResponse(resp, &rrSet)
 	if err != nil {
-		return nil, fmt.Errorf("failed to umarshal response body: %w", err)
+		return nil, err
 	}
 
 	return &rrSet, nil
@@ -204,27 +160,14 @@ func (s *RecordsService) Update(domainName string, subName string, recordType st
 		return nil, fmt.Errorf("failed to create endpoint: %w", err)
 	}
 
-	raw, err := json.Marshal(RRSet{Records: records})
+	req, err := s.client.newRequest(http.MethodPatch, endpoint, RRSet{Records: records})
 	if err != nil {
-		return nil, fmt.Errorf("failed to marshal request body: %w", err)
+		return nil, err
 	}
-
-	req, err := http.NewRequest(http.MethodPatch, endpoint.String(), bytes.NewReader(raw))
-	if err != nil {
-		return nil, fmt.Errorf("failed to create request: %w", err)
-	}
-
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", fmt.Sprintf("Token %s", s.token))
 
 	resp, err := s.client.HTTPClient.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("failed to call API: %w", err)
-	}
-
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read response body: %w", err)
 	}
 
 	defer func() { _ = resp.Body.Close() }()
@@ -235,13 +178,13 @@ func (s *RecordsService) Update(domainName string, subName string, recordType st
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("error: %d: %s", resp.StatusCode, string(body))
+		return nil, handleError(resp)
 	}
 
 	var updatedRRSet RRSet
-	err = json.Unmarshal(body, &updatedRRSet)
+	err = handleResponse(resp, &updatedRRSet)
 	if err != nil {
-		return nil, fmt.Errorf("failed to umarshal response body: %w", err)
+		return nil, err
 	}
 
 	return &updatedRRSet, nil
@@ -259,13 +202,10 @@ func (s *RecordsService) Delete(domainName string, subName string, recordType st
 		return fmt.Errorf("failed to create endpoint: %w", err)
 	}
 
-	req, err := http.NewRequest(http.MethodDelete, endpoint.String(), nil)
+	req, err := s.client.newRequest(http.MethodDelete, endpoint, nil)
 	if err != nil {
-		return fmt.Errorf("failed to create request: %w", err)
+		return err
 	}
-
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", fmt.Sprintf("Token %s", s.token))
 
 	resp, err := s.client.HTTPClient.Do(req)
 	if err != nil {
@@ -275,9 +215,7 @@ func (s *RecordsService) Delete(domainName string, subName string, recordType st
 	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusNoContent {
-		body, _ := ioutil.ReadAll(resp.Body)
-
-		return fmt.Errorf("error: %d: %s", resp.StatusCode, string(body))
+		return handleError(resp)
 	}
 
 	return nil

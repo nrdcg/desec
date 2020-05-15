@@ -1,10 +1,7 @@
 package desec
 
 import (
-	"bytes"
-	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"time"
 )
@@ -22,8 +19,6 @@ type Token struct {
 // https://desec.readthedocs.io/en/latest/auth/tokens.html
 type TokensService struct {
 	client *Client
-
-	token string
 }
 
 // GetAll retrieving all current tokens.
@@ -34,13 +29,10 @@ func (s *TokensService) GetAll() ([]Token, error) {
 		return nil, fmt.Errorf("failed to create endpoint: %w", err)
 	}
 
-	req, err := http.NewRequest(http.MethodGet, endpoint.String(), nil)
+	req, err := s.client.newRequest(http.MethodGet, endpoint, nil)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create request: %w", err)
+		return nil, err
 	}
-
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", fmt.Sprintf("Token %s", s.token))
 
 	resp, err := s.client.HTTPClient.Do(req)
 	if err != nil {
@@ -49,19 +41,14 @@ func (s *TokensService) GetAll() ([]Token, error) {
 
 	defer func() { _ = resp.Body.Close() }()
 
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read response body: %w", err)
-	}
-
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("error: %d: %s", resp.StatusCode, string(body))
+		return nil, handleError(resp)
 	}
 
 	var tokens []Token
-	err = json.Unmarshal(body, &tokens)
+	err = handleResponse(resp, &tokens)
 	if err != nil {
-		return nil, fmt.Errorf("failed to umarshal response body: %w", err)
+		return nil, err
 	}
 
 	return tokens, nil
@@ -75,18 +62,10 @@ func (s *TokensService) Create(name string) (*Token, error) {
 		return nil, fmt.Errorf("failed to create endpoint: %w", err)
 	}
 
-	raw, err := json.Marshal(Token{Name: name})
+	req, err := s.client.newRequest(http.MethodPost, endpoint, Token{Name: name})
 	if err != nil {
-		return nil, fmt.Errorf("failed to marshal request body: %w", err)
+		return nil, err
 	}
-
-	req, err := http.NewRequest(http.MethodPost, endpoint.String(), bytes.NewReader(raw))
-	if err != nil {
-		return nil, fmt.Errorf("failed to create request: %w", err)
-	}
-
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", fmt.Sprintf("Token %s", s.token))
 
 	resp, err := s.client.HTTPClient.Do(req)
 	if err != nil {
@@ -95,19 +74,14 @@ func (s *TokensService) Create(name string) (*Token, error) {
 
 	defer func() { _ = resp.Body.Close() }()
 
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read response body: %w", err)
-	}
-
 	if resp.StatusCode != http.StatusCreated {
-		return nil, fmt.Errorf("error: %d: %s", resp.StatusCode, string(body))
+		return nil, handleError(resp)
 	}
 
 	var token Token
-	err = json.Unmarshal(body, &token)
+	err = handleResponse(resp, &token)
 	if err != nil {
-		return nil, fmt.Errorf("failed to umarshal response body: %w", err)
+		return nil, err
 	}
 
 	return &token, nil
@@ -121,12 +95,10 @@ func (s *TokensService) Delete(tokenID string) error {
 		return fmt.Errorf("failed to create endpoint: %w", err)
 	}
 
-	req, err := http.NewRequest(http.MethodDelete, endpoint.String(), nil)
+	req, err := s.client.newRequest(http.MethodDelete, endpoint, nil)
 	if err != nil {
-		return fmt.Errorf("failed to create request: %w", err)
+		return err
 	}
-
-	req.Header.Set("Authorization", fmt.Sprintf("Token %s", s.token))
 
 	resp, err := s.client.HTTPClient.Do(req)
 	if err != nil {
@@ -136,9 +108,7 @@ func (s *TokensService) Delete(tokenID string) error {
 	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusNoContent {
-		body, _ := ioutil.ReadAll(resp.Body)
-
-		return fmt.Errorf("error: %d: %s", resp.StatusCode, string(body))
+		return handleError(resp)
 	}
 
 	return nil

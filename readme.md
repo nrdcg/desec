@@ -41,7 +41,7 @@ import (
 )
 
 func main() {
-	client := desec.NewAccountClient()
+	client := desec.NewClient("")
 	registration := desec.Registration{
 		Email:    "email@example.com",
 		Password: "secret",
@@ -50,8 +50,39 @@ func main() {
 			Solution: "12H45",
 		},
 	}
-	
-	err := client.Register(registration)
+
+	err := client.Account.Register(registration)
+	if err != nil {
+		panic(err)
+	}
+}
+```
+
+```go
+package main
+
+import (
+	"fmt"
+
+	"github.com/nrdcg/desec"
+)
+
+func main() {
+	client := desec.NewClient("")
+
+	_, err := client.Account.Login("email@example.com", "secret")
+	if err != nil {
+		panic(err)
+	}
+
+	domains, err := client.Domains.GetAll()
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Println(domains)
+
+	err = client.Account.Logout()
 	if err != nil {
 		panic(err)
 	}

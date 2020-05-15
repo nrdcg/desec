@@ -1,12 +1,8 @@
 package desec
 
 import (
-	"bytes"
-	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"net/http"
-	"net/url"
 	"time"
 )
 
@@ -33,136 +29,105 @@ type Registration struct {
 	Captcha  *Captcha `json:"captcha,omitempty"`
 }
 
-// AccountClient handles communication with the account related methods of the deSEC API.
+// AccountService handles communication with the account related methods of the deSEC API.
 //
 // https://desec.readthedocs.io/en/latest/auth/account.html
-type AccountClient struct {
-	// HTTP client used to communicate with the API.
-	HTTPClient *http.Client
-
-	// Base URL for API requests.
-	BaseURL string
-}
-
-// NewAccountClient creates a new AccountClient.
-func NewAccountClient() *AccountClient {
-	return &AccountClient{
-		HTTPClient: http.DefaultClient,
-		BaseURL:    defaultBaseURL,
-	}
+type AccountService struct {
+	client *Client
 }
 
 // Login Log in.
 // https://desec.readthedocs.io/en/latest/auth/account.html#log-in
-func (s *AccountClient) Login(email, password string) (*Token, error) {
-	endpoint, err := s.createEndpoint("auth", "login")
+func (s *AccountService) Login(email, password string) (*Token, error) {
+	endpoint, err := s.client.createEndpoint("auth", "login")
 	if err != nil {
 		return nil, fmt.Errorf("failed to create endpoint: %w", err)
 	}
 
-	raw, err := json.Marshal(Account{Email: email, Password: password})
+	req, err := s.client.newRequest(http.MethodPost, endpoint, Account{Email: email, Password: password})
 	if err != nil {
-		return nil, fmt.Errorf("failed to marshal request body: %w", err)
+		return nil, err
 	}
 
-	req, err := http.NewRequest(http.MethodPost, endpoint.String(), bytes.NewReader(raw))
-	if err != nil {
-		return nil, fmt.Errorf("failed to create request: %w", err)
-	}
-
-	req.Header.Set("Content-Type", "application/json")
-
-	resp, err := s.HTTPClient.Do(req)
-	if err != nil {
-		return nil, fmt.Errorf("failed to call API: %w", err)
-	}
-
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read response body: %w", err)
-	}
-
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("error: %d: %s", resp.StatusCode, string(body))
-	}
-
-	var token Token
-	err = json.Unmarshal(body, &token)
-	if err != nil {
-		return nil, fmt.Errorf("failed to umarshal response body: %w", err)
-	}
-
-	return &token, nil
-}
-
-// Logout log out (= delete current token).
-// https://desec.readthedocs.io/en/latest/auth/account.html#log-out
-func (s *AccountClient) Logout(token string) error {
-	endpoint, err := s.createEndpoint("auth", "logout")
-	if err != nil {
-		return fmt.Errorf("failed to create endpoint: %w", err)
-	}
-
-	req, err := http.NewRequest(http.MethodPost, endpoint.String(), nil)
-	if err != nil {
-		return fmt.Errorf("failed to create request: %w", err)
-	}
-
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", fmt.Sprintf("Token %s", token))
-
-	resp, err := s.HTTPClient.Do(req)
-	if err != nil {
-		return fmt.Errorf("failed to call API: %w", err)
-	}
-
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return fmt.Errorf("failed to read response body: %w", err)
-	}
-
-	if resp.StatusCode != http.StatusNoContent {
-		return fmt.Errorf("error: %d: %s", resp.StatusCode, string(body))
-	}
-
-	return nil
-}
-
-// ObtainCaptcha Obtain a captcha.
-// https://desec.readthedocs.io/en/latest/auth/account.html#obtain-a-captcha
-func (s *AccountClient) ObtainCaptcha() (*Captcha, error) {
-	endpoint, err := s.createEndpoint("captcha")
-	if err != nil {
-		return nil, fmt.Errorf("failed to create endpoint: %w", err)
-	}
-
-	req, err := http.NewRequest(http.MethodPost, endpoint.String(), nil)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create request: %w", err)
-	}
-
-	req.Header.Set("Content-Type", "application/json")
-
-	resp, err := s.HTTPClient.Do(req)
+	resp, err := s.client.HTTPClient.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("failed to call API: %w", err)
 	}
 
 	defer func() { _ = resp.Body.Close() }()
 
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read response body: %w", err)
+	if resp.StatusCode != http.StatusOK {
+		return nil, handleError(resp)
 	}
 
+	var token Token
+	err = handleResponse(resp, &token)
+	if err != nil {
+		return nil, err
+	}
+
+	s.client.token = token.Value
+
+	return &token, nil
+}
+
+// Logout log out (= delete current token).
+// https://desec.readthedocs.io/en/latest/auth/account.html#log-out
+func (s *AccountService) Logout() error {
+	endpoint, err := s.client.createEndpoint("auth", "logout")
+	if err != nil {
+		return fmt.Errorf("failed to create endpoint: %w", err)
+	}
+
+	req, err := s.client.newRequest(http.MethodPost, endpoint, nil)
+	if err != nil {
+		return err
+	}
+
+	resp, err := s.client.HTTPClient.Do(req)
+	if err != nil {
+		return fmt.Errorf("failed to call API: %w", err)
+	}
+
+	defer func() { _ = resp.Body.Close() }()
+
+	if resp.StatusCode != http.StatusNoContent {
+		return handleError(resp)
+	}
+
+	s.client.token = ""
+
+	return nil
+}
+
+// ObtainCaptcha Obtain a captcha.
+// https://desec.readthedocs.io/en/latest/auth/account.html#obtain-a-captcha
+func (s *AccountService) ObtainCaptcha() (*Captcha, error) {
+	endpoint, err := s.client.createEndpoint("captcha")
+	if err != nil {
+		return nil, fmt.Errorf("failed to create endpoint: %w", err)
+	}
+
+	req, err := s.client.newRequest(http.MethodPost, endpoint, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	resp, err := s.client.HTTPClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("failed to call API: %w", err)
+	}
+
+	defer func() { _ = resp.Body.Close() }()
+
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("error: %d: %s", resp.StatusCode, string(body))
+		return nil, handleError(resp)
 	}
 
 	var captcha Captcha
-	err = json.Unmarshal(body, &captcha)
+	err = handleResponse(resp, &captcha)
 	if err != nil {
-		return nil, fmt.Errorf("failed to umarshal response body: %w", err)
+		return nil, err
 	}
 
 	return &captcha, nil
@@ -170,25 +135,18 @@ func (s *AccountClient) ObtainCaptcha() (*Captcha, error) {
 
 // Register register account.
 // https://desec.readthedocs.io/en/latest/auth/account.html#register-account
-func (s *AccountClient) Register(registration Registration) error {
-	endpoint, err := s.createEndpoint("auth")
+func (s *AccountService) Register(registration Registration) error {
+	endpoint, err := s.client.createEndpoint("auth")
 	if err != nil {
 		return fmt.Errorf("failed to create endpoint: %w", err)
 	}
 
-	raw, err := json.Marshal(registration)
+	req, err := s.client.newRequest(http.MethodPost, endpoint, registration)
 	if err != nil {
-		return fmt.Errorf("failed to marshal request body: %w", err)
+		return err
 	}
 
-	req, err := http.NewRequest(http.MethodPost, endpoint.String(), bytes.NewReader(raw))
-	if err != nil {
-		return fmt.Errorf("failed to create request: %w", err)
-	}
-
-	req.Header.Set("Content-Type", "application/json")
-
-	resp, err := s.HTTPClient.Do(req)
+	resp, err := s.client.HTTPClient.Do(req)
 	if err != nil {
 		return fmt.Errorf("failed to call API: %w", err)
 	}
@@ -196,9 +154,7 @@ func (s *AccountClient) Register(registration Registration) error {
 	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusAccepted {
-		body, _ := ioutil.ReadAll(resp.Body)
-
-		return fmt.Errorf("error: %d: %s", resp.StatusCode, string(body))
+		return handleError(resp)
 	}
 
 	return nil
@@ -206,40 +162,32 @@ func (s *AccountClient) Register(registration Registration) error {
 
 // RetrieveInformation retrieve account information.
 // https://desec.readthedocs.io/en/latest/auth/account.html#retrieve-account-information
-func (s *AccountClient) RetrieveInformation(token string) (*Account, error) {
-	endpoint, err := s.createEndpoint("auth", "account")
+func (s *AccountService) RetrieveInformation() (*Account, error) {
+	endpoint, err := s.client.createEndpoint("auth", "account")
 	if err != nil {
 		return nil, fmt.Errorf("failed to create endpoint: %w", err)
 	}
 
-	req, err := http.NewRequest(http.MethodPost, endpoint.String(), nil)
+	req, err := s.client.newRequest(http.MethodPost, endpoint, nil)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create request: %w", err)
+		return nil, err
 	}
 
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", fmt.Sprintf("Token %s", token))
-
-	resp, err := s.HTTPClient.Do(req)
+	resp, err := s.client.HTTPClient.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("failed to call API: %w", err)
 	}
 
 	defer func() { _ = resp.Body.Close() }()
 
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read response body: %w", err)
-	}
-
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("error: %d: %s", resp.StatusCode, string(body))
+		return nil, handleError(resp)
 	}
 
 	var account Account
-	err = json.Unmarshal(body, &account)
+	err = handleResponse(resp, &account)
 	if err != nil {
-		return nil, fmt.Errorf("failed to umarshal response body: %w", err)
+		return nil, err
 	}
 
 	return &account, nil
@@ -248,25 +196,18 @@ func (s *AccountClient) RetrieveInformation(token string) (*Account, error) {
 // PasswordReset password reset and password change.
 // https://desec.readthedocs.io/en/latest/auth/account.html#password-reset
 // https://desec.readthedocs.io/en/latest/auth/account.html#password-change
-func (s *AccountClient) PasswordReset(email string, captcha Captcha) error {
-	endpoint, err := s.createEndpoint("auth", "account", "reset-password")
+func (s *AccountService) PasswordReset(email string, captcha Captcha) error {
+	endpoint, err := s.client.createEndpoint("auth", "account", "reset-password")
 	if err != nil {
 		return fmt.Errorf("failed to create endpoint: %w", err)
 	}
 
-	raw, err := json.Marshal(Registration{Email: email, Captcha: &captcha})
+	req, err := s.client.newRequest(http.MethodPost, endpoint, Registration{Email: email, Captcha: &captcha})
 	if err != nil {
-		return fmt.Errorf("failed to marshal request body: %w", err)
+		return err
 	}
 
-	req, err := http.NewRequest(http.MethodPost, endpoint.String(), bytes.NewReader(raw))
-	if err != nil {
-		return fmt.Errorf("failed to create request: %w", err)
-	}
-
-	req.Header.Set("Content-Type", "application/json")
-
-	resp, err := s.HTTPClient.Do(req)
+	resp, err := s.client.HTTPClient.Do(req)
 	if err != nil {
 		return fmt.Errorf("failed to call API: %w", err)
 	}
@@ -274,9 +215,7 @@ func (s *AccountClient) PasswordReset(email string, captcha Captcha) error {
 	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusAccepted {
-		body, _ := ioutil.ReadAll(resp.Body)
-
-		return fmt.Errorf("error: %d: %s", resp.StatusCode, string(body))
+		return handleError(resp)
 	}
 
 	return nil
@@ -284,25 +223,18 @@ func (s *AccountClient) PasswordReset(email string, captcha Captcha) error {
 
 // ChangeEmail changes email address.
 // https://desec.readthedocs.io/en/latest/auth/account.html#change-email-address
-func (s *AccountClient) ChangeEmail(email, password string, newEmail string) error {
-	endpoint, err := s.createEndpoint("auth", "account", "change-email")
+func (s *AccountService) ChangeEmail(email, password string, newEmail string) error {
+	endpoint, err := s.client.createEndpoint("auth", "account", "change-email")
 	if err != nil {
 		return fmt.Errorf("failed to create endpoint: %w", err)
 	}
 
-	raw, err := json.Marshal(Registration{Email: email, Password: password, NewEmail: newEmail})
+	req, err := s.client.newRequest(http.MethodPost, endpoint, Registration{Email: email, Password: password, NewEmail: newEmail})
 	if err != nil {
-		return fmt.Errorf("failed to marshal request body: %w", err)
+		return err
 	}
 
-	req, err := http.NewRequest(http.MethodPost, endpoint.String(), bytes.NewReader(raw))
-	if err != nil {
-		return fmt.Errorf("failed to create request: %w", err)
-	}
-
-	req.Header.Set("Content-Type", "application/json")
-
-	resp, err := s.HTTPClient.Do(req)
+	resp, err := s.client.HTTPClient.Do(req)
 	if err != nil {
 		return fmt.Errorf("failed to call API: %w", err)
 	}
@@ -310,9 +242,7 @@ func (s *AccountClient) ChangeEmail(email, password string, newEmail string) err
 	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusAccepted {
-		body, _ := ioutil.ReadAll(resp.Body)
-
-		return fmt.Errorf("error: %d: %s", resp.StatusCode, string(body))
+		return handleError(resp)
 	}
 
 	return nil
@@ -320,25 +250,18 @@ func (s *AccountClient) ChangeEmail(email, password string, newEmail string) err
 
 // Delete deletes account.
 // https://desec.readthedocs.io/en/latest/auth/account.html#delete-account
-func (s *AccountClient) Delete(email, password string) error {
-	endpoint, err := s.createEndpoint("auth", "account", "delete")
+func (s *AccountService) Delete(email, password string) error {
+	endpoint, err := s.client.createEndpoint("auth", "account", "delete")
 	if err != nil {
 		return fmt.Errorf("failed to create endpoint: %w", err)
 	}
 
-	raw, err := json.Marshal(Account{Email: email, Password: password})
+	req, err := s.client.newRequest(http.MethodPost, endpoint, Account{Email: email, Password: password})
 	if err != nil {
-		return fmt.Errorf("failed to marshal request body: %w", err)
+		return err
 	}
 
-	req, err := http.NewRequest(http.MethodPost, endpoint.String(), bytes.NewReader(raw))
-	if err != nil {
-		return fmt.Errorf("failed to create request: %w", err)
-	}
-
-	req.Header.Set("Content-Type", "application/json")
-
-	resp, err := s.HTTPClient.Do(req)
+	resp, err := s.client.HTTPClient.Do(req)
 	if err != nil {
 		return fmt.Errorf("failed to call API: %w", err)
 	}
@@ -346,14 +269,8 @@ func (s *AccountClient) Delete(email, password string) error {
 	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusAccepted {
-		body, _ := ioutil.ReadAll(resp.Body)
-
-		return fmt.Errorf("error: %d: %s", resp.StatusCode, string(body))
+		return handleError(resp)
 	}
 
 	return nil
-}
-
-func (s *AccountClient) createEndpoint(parts ...string) (*url.URL, error) {
-	return createEndpoint(s.BaseURL, parts)
 }
