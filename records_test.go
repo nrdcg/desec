@@ -157,7 +157,64 @@ func TestRecordsService_Update(t *testing.T) {
 		}
 	})
 
-	updatedRecord, err := client.Records.Update("example.dedyn.io", "_acme-challenge", "TXT", []string{`"updated"`})
+	rrSet := RRSet{
+		Records: []string{`"updated"`},
+	}
+
+	updatedRecord, err := client.Records.Update("example.dedyn.io", "_acme-challenge", "TXT", rrSet)
+	require.NoError(t, err)
+
+	expected := &RRSet{
+		Name:    "_acme-challenge.example.dedyn.io.",
+		Domain:  "example.dedyn.io",
+		SubName: "_acme-challenge",
+		Type:    "TXT",
+		Records: []string{`"updated"`},
+		TTL:     300,
+		Created: mustParseTime("2020-05-06T11:46:07.641885Z"),
+	}
+	assert.Equal(t, expected, updatedRecord)
+}
+
+func TestRecordsService_Replace(t *testing.T) {
+	mux := http.NewServeMux()
+	server := httptest.NewServer(mux)
+	t.Cleanup(server.Close)
+
+	client := NewClient("token")
+	client.BaseURL = server.URL
+
+	mux.HandleFunc("/domains/example.dedyn.io/rrsets/_acme-challenge/TXT/", func(rw http.ResponseWriter, req *http.Request) {
+		if req.Method != http.MethodPut {
+			http.Error(rw, "invalid method", http.StatusMethodNotAllowed)
+			return
+		}
+
+		file, err := os.Open("./fixtures/records_replace.json")
+		if err != nil {
+			http.Error(rw, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		defer func() { _ = file.Close() }()
+
+		_, err = io.Copy(rw, file)
+		if err != nil {
+			http.Error(rw, err.Error(), http.StatusInternalServerError)
+			return
+		}
+	})
+
+	rrSet := RRSet{
+		Name:    "_acme-challenge.example.dedyn.io.",
+		Domain:  "example.dedyn.io",
+		SubName: "_acme-challenge",
+		Type:    "TXT",
+		Records: []string{`"updated"`},
+		TTL:     0,
+		Created: nil,
+	}
+
+	updatedRecord, err := client.Records.Replace("example.dedyn.io", "_acme-challenge", "TXT", rrSet)
 	require.NoError(t, err)
 
 	expected := &RRSet{
