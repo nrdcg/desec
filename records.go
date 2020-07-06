@@ -117,7 +117,7 @@ func (s *RecordsService) Create(rrSet RRSet) (*RRSet, error) {
 
 // Get gets a RRSet.
 // https://desec.readthedocs.io/en/latest/dns/rrsets.html#retrieving-a-specific-rrset
-func (s *RecordsService) Get(domainName, subName string, recordType string) (*RRSet, error) {
+func (s *RecordsService) Get(domainName, subName, recordType string) (*RRSet, error) {
 	if subName == "" {
 		subName = ApexZone
 	}
@@ -154,7 +154,7 @@ func (s *RecordsService) Get(domainName, subName string, recordType string) (*RR
 
 // Update updates RRSet (PATCH).
 // https://desec.readthedocs.io/en/latest/dns/rrsets.html#modifying-an-rrset
-func (s *RecordsService) Update(domainName string, subName string, recordType string, rrSet RRSet) (*RRSet, error) {
+func (s *RecordsService) Update(domainName, subName, recordType string, rrSet RRSet) (*RRSet, error) {
 	if subName == "" {
 		subName = ApexZone
 	}
@@ -196,7 +196,7 @@ func (s *RecordsService) Update(domainName string, subName string, recordType st
 
 // Replace replaces a RRSet (PUT).
 // https://desec.readthedocs.io/en/latest/dns/rrsets.html#modifying-an-rrset
-func (s *RecordsService) Replace(domainName string, subName string, recordType string, rrSet RRSet) (*RRSet, error) {
+func (s *RecordsService) Replace(domainName, subName, recordType string, rrSet RRSet) (*RRSet, error) {
 	if subName == "" {
 		subName = ApexZone
 	}
@@ -238,7 +238,7 @@ func (s *RecordsService) Replace(domainName string, subName string, recordType s
 
 // Delete deletes a RRset.
 // https://desec.readthedocs.io/en/latest/dns/rrsets.html#deleting-an-rrset
-func (s *RecordsService) Delete(domainName string, subName string, recordType string) error {
+func (s *RecordsService) Delete(domainName, subName, recordType string) error {
 	if subName == "" {
 		subName = ApexZone
 	}

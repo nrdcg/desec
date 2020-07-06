@@ -223,7 +223,7 @@ func (s *AccountService) PasswordReset(email string, captcha Captcha) error {
 
 // ChangeEmail changes email address.
 // https://desec.readthedocs.io/en/latest/auth/account.html#change-email-address
-func (s *AccountService) ChangeEmail(email, password string, newEmail string) error {
+func (s *AccountService) ChangeEmail(email, password, newEmail string) error {
 	endpoint, err := s.client.createEndpoint("auth", "account", "change-email")
 	if err != nil {
 		return fmt.Errorf("failed to create endpoint: %w", err)
