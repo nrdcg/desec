@@ -43,7 +43,7 @@ func (s *DomainsService) Create(domainName string) (*Domain, error) {
 		return nil, err
 	}
 
-	resp, err := s.client.HTTPClient.Do(req)
+	resp, err := s.client.httpClient.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("failed to call API: %w", err)
 	}
@@ -76,7 +76,7 @@ func (s *DomainsService) GetAll() ([]Domain, error) {
 		return nil, err
 	}
 
-	resp, err := s.client.HTTPClient.Do(req)
+	resp, err := s.client.httpClient.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("failed to call API: %w", err)
 	}
@@ -109,7 +109,7 @@ func (s *DomainsService) Get(domainName string) (*Domain, error) {
 		return nil, err
 	}
 
-	resp, err := s.client.HTTPClient.Do(req)
+	resp, err := s.client.httpClient.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("failed to call API: %w", err)
 	}
@@ -142,7 +142,7 @@ func (s *DomainsService) Delete(domainName string) error {
 		return err
 	}
 
-	resp, err := s.client.HTTPClient.Do(req)
+	resp, err := s.client.httpClient.Do(req)
 	if err != nil {
 		return fmt.Errorf("failed to call API: %w", err)
 	}

@@ -49,7 +49,7 @@ func (s *AccountService) Login(email, password string) (*Token, error) {
 		return nil, err
 	}
 
-	resp, err := s.client.HTTPClient.Do(req)
+	resp, err := s.client.httpClient.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("failed to call API: %w", err)
 	}
@@ -84,7 +84,7 @@ func (s *AccountService) Logout() error {
 		return err
 	}
 
-	resp, err := s.client.HTTPClient.Do(req)
+	resp, err := s.client.httpClient.Do(req)
 	if err != nil {
 		return fmt.Errorf("failed to call API: %w", err)
 	}
@@ -113,7 +113,7 @@ func (s *AccountService) ObtainCaptcha() (*Captcha, error) {
 		return nil, err
 	}
 
-	resp, err := s.client.HTTPClient.Do(req)
+	resp, err := s.client.httpClient.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("failed to call API: %w", err)
 	}
@@ -146,7 +146,7 @@ func (s *AccountService) Register(registration Registration) error {
 		return err
 	}
 
-	resp, err := s.client.HTTPClient.Do(req)
+	resp, err := s.client.httpClient.Do(req)
 	if err != nil {
 		return fmt.Errorf("failed to call API: %w", err)
 	}
@@ -173,7 +173,7 @@ func (s *AccountService) RetrieveInformation() (*Account, error) {
 		return nil, err
 	}
 
-	resp, err := s.client.HTTPClient.Do(req)
+	resp, err := s.client.httpClient.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("failed to call API: %w", err)
 	}
@@ -207,7 +207,7 @@ func (s *AccountService) PasswordReset(email string, captcha Captcha) error {
 		return err
 	}
 
-	resp, err := s.client.HTTPClient.Do(req)
+	resp, err := s.client.httpClient.Do(req)
 	if err != nil {
 		return fmt.Errorf("failed to call API: %w", err)
 	}
@@ -234,7 +234,7 @@ func (s *AccountService) ChangeEmail(email, password, newEmail string) error {
 		return err
 	}
 
-	resp, err := s.client.HTTPClient.Do(req)
+	resp, err := s.client.httpClient.Do(req)
 	if err != nil {
 		return fmt.Errorf("failed to call API: %w", err)
 	}
@@ -261,7 +261,7 @@ func (s *AccountService) Delete(email, password string) error {
 		return err
 	}
 
-	resp, err := s.client.HTTPClient.Do(req)
+	resp, err := s.client.httpClient.Do(req)
 	if err != nil {
 		return fmt.Errorf("failed to call API: %w", err)
 	}

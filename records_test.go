@@ -17,7 +17,7 @@ func TestRecordsService_Create(t *testing.T) {
 	server := httptest.NewServer(mux)
 	t.Cleanup(server.Close)
 
-	client := NewClient("token")
+	client := New("token", NewDefaultClientOptions())
 	client.BaseURL = server.URL
 
 	mux.HandleFunc("/domains/example.dedyn.io/rrsets/", func(rw http.ResponseWriter, req *http.Request) {
@@ -70,7 +70,7 @@ func TestRecordsService_Delete(t *testing.T) {
 	server := httptest.NewServer(mux)
 	t.Cleanup(server.Close)
 
-	client := NewClient("token")
+	client := New("token", NewDefaultClientOptions())
 	client.BaseURL = server.URL
 
 	mux.HandleFunc("/domains/example.dedyn.io/rrsets/_acme-challenge/TXT/", func(rw http.ResponseWriter, req *http.Request) {
@@ -91,7 +91,7 @@ func TestRecordsService_Get(t *testing.T) {
 	server := httptest.NewServer(mux)
 	t.Cleanup(server.Close)
 
-	client := NewClient("token")
+	client := New("token", NewDefaultClientOptions())
 	client.BaseURL = server.URL
 
 	mux.HandleFunc("/domains/example.dedyn.io/rrsets/_acme-challenge/TXT/", func(rw http.ResponseWriter, req *http.Request) {
@@ -134,7 +134,7 @@ func TestRecordsService_Update(t *testing.T) {
 	server := httptest.NewServer(mux)
 	t.Cleanup(server.Close)
 
-	client := NewClient("token")
+	client := New("token", NewDefaultClientOptions())
 	client.BaseURL = server.URL
 
 	mux.HandleFunc("/domains/example.dedyn.io/rrsets/_acme-challenge/TXT/", func(rw http.ResponseWriter, req *http.Request) {
@@ -181,7 +181,7 @@ func TestRecordsService_Replace(t *testing.T) {
 	server := httptest.NewServer(mux)
 	t.Cleanup(server.Close)
 
-	client := NewClient("token")
+	client := New("token", NewDefaultClientOptions())
 	client.BaseURL = server.URL
 
 	mux.HandleFunc("/domains/example.dedyn.io/rrsets/_acme-challenge/TXT/", func(rw http.ResponseWriter, req *http.Request) {
@@ -234,7 +234,7 @@ func TestRecordsService_GetAll(t *testing.T) {
 	server := httptest.NewServer(mux)
 	t.Cleanup(server.Close)
 
-	client := NewClient("token")
+	client := New("token", NewDefaultClientOptions())
 	client.BaseURL = server.URL
 
 	mux.HandleFunc("/domains/example.dedyn.io/rrsets/", func(rw http.ResponseWriter, req *http.Request) {

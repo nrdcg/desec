@@ -16,7 +16,7 @@ func TestAccountClient_ObtainCaptcha(t *testing.T) {
 	server := httptest.NewServer(mux)
 	t.Cleanup(server.Close)
 
-	client := NewClient("")
+	client := New("", NewDefaultClientOptions())
 	client.BaseURL = server.URL
 
 	mux.HandleFunc("/captcha/", func(rw http.ResponseWriter, req *http.Request) {
@@ -54,7 +54,7 @@ func TestAccountClient_Register(t *testing.T) {
 	server := httptest.NewServer(mux)
 	t.Cleanup(server.Close)
 
-	client := NewClient("")
+	client := New("", NewDefaultClientOptions())
 	client.BaseURL = server.URL
 
 	mux.HandleFunc("/auth/", func(rw http.ResponseWriter, req *http.Request) {
@@ -84,7 +84,7 @@ func TestAccountClient_Login(t *testing.T) {
 	server := httptest.NewServer(mux)
 	t.Cleanup(server.Close)
 
-	client := NewClient("")
+	client := New("", NewDefaultClientOptions())
 	client.BaseURL = server.URL
 
 	mux.HandleFunc("/auth/login/", func(rw http.ResponseWriter, req *http.Request) {
@@ -126,7 +126,7 @@ func TestAccountClient_Logout(t *testing.T) {
 	server := httptest.NewServer(mux)
 	t.Cleanup(server.Close)
 
-	client := NewClient("f07Q0TRmEb-CRWPe4h64_iV2jbet")
+	client := New("f07Q0TRmEb-CRWPe4h64_iV2jbet", NewDefaultClientOptions())
 	client.BaseURL = server.URL
 
 	mux.HandleFunc("/auth/logout/", func(rw http.ResponseWriter, req *http.Request) {
@@ -149,7 +149,7 @@ func TestAccountClient_RetrieveInformation(t *testing.T) {
 	server := httptest.NewServer(mux)
 	t.Cleanup(server.Close)
 
-	client := NewClient("f07Q0TRmEb-CRWPe4h64_iV2jbet")
+	client := New("f07Q0TRmEb-CRWPe4h64_iV2jbet", NewDefaultClientOptions())
 	client.BaseURL = server.URL
 
 	mux.HandleFunc("/auth/account/", func(rw http.ResponseWriter, req *http.Request) {
@@ -188,7 +188,7 @@ func TestAccountClient_PasswordReset(t *testing.T) {
 	server := httptest.NewServer(mux)
 	t.Cleanup(server.Close)
 
-	client := NewClient("")
+	client := New("", NewDefaultClientOptions())
 	client.BaseURL = server.URL
 
 	mux.HandleFunc("/", func(rw http.ResponseWriter, req *http.Request) {
@@ -214,7 +214,7 @@ func TestAccountClient_ChangeEmail(t *testing.T) {
 	server := httptest.NewServer(mux)
 	t.Cleanup(server.Close)
 
-	client := NewClient("")
+	client := New("", NewDefaultClientOptions())
 	client.BaseURL = server.URL
 
 	mux.HandleFunc("/", func(rw http.ResponseWriter, req *http.Request) {
@@ -235,7 +235,7 @@ func TestAccountClient_Delete(t *testing.T) {
 	server := httptest.NewServer(mux)
 	t.Cleanup(server.Close)
 
-	client := NewClient("")
+	client := New("", NewDefaultClientOptions())
 	client.BaseURL = server.URL
 
 	mux.HandleFunc("/auth/account/delete/", func(rw http.ResponseWriter, req *http.Request) {

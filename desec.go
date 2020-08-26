@@ -8,21 +8,51 @@ import (
 	"net/http"
 	"net/url"
 	"path"
+
+	"github.com/nrdcg/desec/internal"
 )
 
 const defaultBaseURL = "https://desec.io/api/v1/"
+
+type httpDoer interface {
+	Do(req *http.Request) (*http.Response, error)
+}
 
 type service struct {
 	client *Client
 }
 
+// ClientOptions the options of the Client.
+type ClientOptions struct {
+	// HTTPClient HTTP client used to communicate with the API.
+	HTTPClient *http.Client
+	// LimitRead number of request per second.
+	LimitRead int
+	// LimitWrite number of request per second.
+	LimitWrite int
+}
+
+// NewDefaultClientOptions creates a new ClientOptions with default values.
+func NewDefaultClientOptions() ClientOptions {
+	return ClientOptions{
+		HTTPClient: http.DefaultClient,
+
+		// 5 requests every 1 second
+		// https://github.com/desec-io/desec-stack/blob/70b9b5aac5e57ef30492d45c99e8648ad03dd0ca/api/api/settings.py#L120
+		LimitRead: 5,
+
+		// 3 requests every 1 second
+		// https://github.com/desec-io/desec-stack/blob/70b9b5aac5e57ef30492d45c99e8648ad03dd0ca/api/api/settings.py#L121
+		LimitWrite: 3,
+	}
+}
+
 // Client deSEC API client.
 type Client struct {
-	// HTTP client used to communicate with the API.
-	HTTPClient *http.Client
-
 	// Base URL for API requests.
 	BaseURL string
+
+	httpClient httpDoer
 
 	token string
 
@@ -35,10 +65,10 @@ type Client struct {
 	Domains *DomainsService
 }
 
-// NewClient creates a new Client.
-func NewClient(token string) *Client {
+// New creates a new Client.
+func New(token string, opts ClientOptions) *Client {
 	client := &Client{
-		HTTPClient: http.DefaultClient,
+		httpClient: internal.New(opts.HTTPClient, opts.LimitRead, opts.LimitRead),
 		BaseURL:    defaultBaseURL,
 		token:      token,
 	}

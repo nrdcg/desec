@@ -58,7 +58,7 @@ func (s *RecordsService) GetAll(domainName string, filter *RRSetFilter) ([]RRSet
 		return nil, err
 	}
 
-	resp, err := s.client.HTTPClient.Do(req)
+	resp, err := s.client.httpClient.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("failed to call API: %w", err)
 	}
@@ -91,7 +91,7 @@ func (s *RecordsService) Create(rrSet RRSet) (*RRSet, error) {
 		return nil, err
 	}
 
-	resp, err := s.client.HTTPClient.Do(req)
+	resp, err := s.client.httpClient.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("failed to call API: %w", err)
 	}
@@ -132,7 +132,7 @@ func (s *RecordsService) Get(domainName, subName, recordType string) (*RRSet, er
 		return nil, err
 	}
 
-	resp, err := s.client.HTTPClient.Do(req)
+	resp, err := s.client.httpClient.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("failed to call API: %w", err)
 	}
@@ -169,7 +169,7 @@ func (s *RecordsService) Update(domainName, subName, recordType string, rrSet RR
 		return nil, err
 	}
 
-	resp, err := s.client.HTTPClient.Do(req)
+	resp, err := s.client.httpClient.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("failed to call API: %w", err)
 	}
@@ -211,7 +211,7 @@ func (s *RecordsService) Replace(domainName, subName, recordType string, rrSet R
 		return nil, err
 	}
 
-	resp, err := s.client.HTTPClient.Do(req)
+	resp, err := s.client.httpClient.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("failed to call API: %w", err)
 	}
@@ -253,7 +253,7 @@ func (s *RecordsService) Delete(domainName, subName, recordType string) error {
 		return err
 	}
 
-	resp, err := s.client.HTTPClient.Do(req)
+	resp, err := s.client.httpClient.Do(req)
 	if err != nil {
 		return fmt.Errorf("failed to call API: %w", err)
 	}

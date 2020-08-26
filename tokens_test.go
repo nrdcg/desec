@@ -16,7 +16,7 @@ func TestTokensService_Create(t *testing.T) {
 	server := httptest.NewServer(mux)
 	t.Cleanup(server.Close)
 
-	client := NewClient("token")
+	client := New("token", NewDefaultClientOptions())
 	client.BaseURL = server.URL
 
 	mux.HandleFunc("/auth/tokens/", func(rw http.ResponseWriter, req *http.Request) {
@@ -57,7 +57,7 @@ func TestTokensService_GetAll(t *testing.T) {
 	server := httptest.NewServer(mux)
 	t.Cleanup(server.Close)
 
-	client := NewClient("token")
+	client := New("token", NewDefaultClientOptions())
 	client.BaseURL = server.URL
 
 	mux.HandleFunc("/auth/tokens/", func(rw http.ResponseWriter, req *http.Request) {
@@ -103,7 +103,7 @@ func TestTokensService_Delete(t *testing.T) {
 	server := httptest.NewServer(mux)
 	t.Cleanup(server.Close)
 
-	client := NewClient("token")
+	client := New("token", NewDefaultClientOptions())
 	client.BaseURL = server.URL
 
 	mux.HandleFunc("/auth/tokens/aaa/", func(rw http.ResponseWriter, req *http.Request) {

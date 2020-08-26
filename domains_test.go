@@ -16,7 +16,7 @@ func TestDomainsService_Create(t *testing.T) {
 	server := httptest.NewServer(mux)
 	t.Cleanup(server.Close)
 
-	client := NewClient("token")
+	client := New("token", NewDefaultClientOptions())
 	client.BaseURL = server.URL
 
 	mux.HandleFunc("/domains/", func(rw http.ResponseWriter, req *http.Request) {
@@ -70,7 +70,7 @@ func TestDomainsService_Delete(t *testing.T) {
 	server := httptest.NewServer(mux)
 	t.Cleanup(server.Close)
 
-	client := NewClient("token")
+	client := New("token", NewDefaultClientOptions())
 	client.BaseURL = server.URL
 
 	mux.HandleFunc("/domains/example.com/", func(rw http.ResponseWriter, req *http.Request) {
@@ -91,7 +91,7 @@ func TestDomainsService_Get(t *testing.T) {
 	server := httptest.NewServer(mux)
 	t.Cleanup(server.Close)
 
-	client := NewClient("token")
+	client := New("token", NewDefaultClientOptions())
 	client.BaseURL = server.URL
 
 	mux.HandleFunc("/domains/example.com/", func(rw http.ResponseWriter, req *http.Request) {
@@ -144,7 +144,7 @@ func TestDomainsService_GetAll(t *testing.T) {
 	server := httptest.NewServer(mux)
 	t.Cleanup(server.Close)
 
-	client := NewClient("token")
+	client := New("token", NewDefaultClientOptions())
 	client.BaseURL = server.URL
 
 	mux.HandleFunc("/domains/", func(rw http.ResponseWriter, req *http.Request) {
