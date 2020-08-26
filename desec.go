@@ -37,13 +37,13 @@ func NewDefaultClientOptions() ClientOptions {
 	return ClientOptions{
 		HTTPClient: http.DefaultClient,
 
-		// 5 requests every 1 second
+		// 10 requests every 1 second
 		// https://github.com/desec-io/desec-stack/blob/70b9b5aac5e57ef30492d45c99e8648ad03dd0ca/api/api/settings.py#L120
-		LimitRead: 5,
+		LimitRead: 10,
 
-		// 3 requests every 1 second
+		// 6 requests every 1 second
 		// https://github.com/desec-io/desec-stack/blob/70b9b5aac5e57ef30492d45c99e8648ad03dd0ca/api/api/settings.py#L121
-		LimitWrite: 3,
+		LimitWrite: 6,
 	}
 }
 
