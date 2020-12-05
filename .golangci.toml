@@ -30,12 +30,16 @@
     "scopelint",
     "bodyclose",
     "wsl",
+    "nlreturn",
     "stylecheck",
     "gomnd",
     "goerr113",
+    "wrapcheck",
     "testpackage",
+    "paralleltest",
+    "tparallel",
     "noctx",
-    "nlreturn",
+    "exhaustivestruct",
   ]
 
 [issues]
