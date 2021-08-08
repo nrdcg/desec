@@ -2,6 +2,7 @@ package desec
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -83,7 +84,7 @@ func New(token string, opts ClientOptions) *Client {
 	return client
 }
 
-func (c *Client) newRequest(method string, endpoint fmt.Stringer, reqBody interface{}) (*http.Request, error) {
+func (c *Client) newRequest(ctx context.Context, method string, endpoint fmt.Stringer, reqBody interface{}) (*http.Request, error) {
 	buf := new(bytes.Buffer)
 
 	if reqBody != nil {
@@ -93,7 +94,7 @@ func (c *Client) newRequest(method string, endpoint fmt.Stringer, reqBody interf
 		}
 	}
 
-	req, err := http.NewRequest(method, endpoint.String(), buf)
+	req, err := http.NewRequestWithContext(ctx, method, endpoint.String(), buf)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create request: %w", err)
 	}

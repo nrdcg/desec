@@ -1,6 +1,7 @@
 package desec
 
 import (
+	"context"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -39,7 +40,7 @@ func TestAccountClient_ObtainCaptcha(t *testing.T) {
 		}
 	})
 
-	captcha, err := client.Account.ObtainCaptcha()
+	captcha, err := client.Account.ObtainCaptcha(context.Background())
 	require.NoError(t, err)
 
 	expected := &Captcha{
@@ -75,7 +76,7 @@ func TestAccountClient_Register(t *testing.T) {
 		},
 	}
 
-	err := client.Account.Register(registration)
+	err := client.Account.Register(context.Background(), registration)
 	require.NoError(t, err)
 }
 
@@ -107,7 +108,7 @@ func TestAccountClient_Login(t *testing.T) {
 		}
 	})
 
-	token, err := client.Account.Login("email@example.com", "secret")
+	token, err := client.Account.Login(context.Background(), "email@example.com", "secret")
 	require.NoError(t, err)
 
 	expected := &Token{
@@ -138,7 +139,7 @@ func TestAccountClient_Logout(t *testing.T) {
 		rw.WriteHeader(http.StatusNoContent)
 	})
 
-	err := client.Account.Logout()
+	err := client.Account.Logout(context.Background())
 	require.NoError(t, err)
 
 	assert.Empty(t, client.token)
@@ -172,7 +173,7 @@ func TestAccountClient_RetrieveInformation(t *testing.T) {
 		}
 	})
 
-	account, err := client.Account.RetrieveInformation()
+	account, err := client.Account.RetrieveInformation(context.Background())
 	require.NoError(t, err)
 
 	expected := &Account{
@@ -205,7 +206,7 @@ func TestAccountClient_PasswordReset(t *testing.T) {
 		Solution: "12H45",
 	}
 
-	err := client.Account.PasswordReset("email@example.com", captcha)
+	err := client.Account.PasswordReset(context.Background(), "email@example.com", captcha)
 	require.NoError(t, err)
 }
 
@@ -226,7 +227,7 @@ func TestAccountClient_ChangeEmail(t *testing.T) {
 		rw.WriteHeader(http.StatusAccepted)
 	})
 
-	err := client.Account.ChangeEmail("email@example.com", "secret", "newemail@example.com")
+	err := client.Account.ChangeEmail(context.Background(), "email@example.com", "secret", "newemail@example.com")
 	require.NoError(t, err)
 }
 
@@ -247,6 +248,6 @@ func TestAccountClient_Delete(t *testing.T) {
 		rw.WriteHeader(http.StatusAccepted)
 	})
 
-	err := client.Account.Delete("email@example.com", "secret")
+	err := client.Account.Delete(context.Background(), "email@example.com", "secret")
 	require.NoError(t, err)
 }

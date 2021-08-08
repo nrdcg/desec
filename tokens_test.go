@@ -1,6 +1,7 @@
 package desec
 
 import (
+	"context"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -40,7 +41,7 @@ func TestTokensService_Create(t *testing.T) {
 		}
 	})
 
-	newToken, err := client.Tokens.Create("my new token")
+	newToken, err := client.Tokens.Create(context.Background(), "my new token")
 	require.NoError(t, err)
 
 	expected := &Token{
@@ -80,7 +81,7 @@ func TestTokensService_GetAll(t *testing.T) {
 		}
 	})
 
-	tokens, err := client.Tokens.GetAll()
+	tokens, err := client.Tokens.GetAll(context.Background())
 	require.NoError(t, err)
 
 	expected := []Token{
@@ -115,6 +116,6 @@ func TestTokensService_Delete(t *testing.T) {
 		rw.WriteHeader(http.StatusNoContent)
 	})
 
-	err := client.Tokens.Delete("aaa")
+	err := client.Tokens.Delete(context.Background(), "aaa")
 	require.NoError(t, err)
 }

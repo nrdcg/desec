@@ -14,6 +14,7 @@ desec is a Go client library for accessing the deSEC API.
 package main
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/nrdcg/desec"
@@ -22,7 +23,7 @@ import (
 func main() {
 	client := desec.NewClient("token")
 
-	newDomain, err := client.Domains.Create("example.com")
+	newDomain, err := client.Domains.Create(context.Background(), "example.com")
 	if err != nil {
 		panic(err)
 	}
@@ -35,7 +36,7 @@ func main() {
 package main
 
 import (
-	"fmt"
+	"context"
 
 	"github.com/nrdcg/desec"
 )
@@ -51,7 +52,7 @@ func main() {
 		},
 	}
 
-	err := client.Account.Register(registration)
+	err := client.Account.Register(context.Background(), registration)
 	if err != nil {
 		panic(err)
 	}
@@ -62,6 +63,7 @@ func main() {
 package main
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/nrdcg/desec"
@@ -70,19 +72,19 @@ import (
 func main() {
 	client := desec.NewClient("")
 
-	_, err := client.Account.Login("email@example.com", "secret")
+	_, err := client.Account.Login(context.Background(), "email@example.com", "secret")
 	if err != nil {
 		panic(err)
 	}
 
-	domains, err := client.Domains.GetAll()
+	domains, err := client.Domains.GetAll(context.Background())
 	if err != nil {
 		panic(err)
 	}
 
 	fmt.Println(domains)
 
-	err = client.Account.Logout()
+	err = client.Account.Logout(context.Background())
 	if err != nil {
 		panic(err)
 	}

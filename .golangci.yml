@@ -74,7 +74,6 @@ linters:
     - prealloc
     - ifshort
     - forcetypeassert
-    - noctx
 
 issues:
   exclude-use-default: false

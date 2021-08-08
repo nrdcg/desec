@@ -1,6 +1,7 @@
 package desec
 
 import (
+	"context"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -50,7 +51,7 @@ func TestRecordsService_Create(t *testing.T) {
 		TTL:     300,
 	}
 
-	newRecord, err := client.Records.Create(record)
+	newRecord, err := client.Records.Create(context.Background(), record)
 	require.NoError(t, err)
 
 	expected := &RRSet{
@@ -82,7 +83,7 @@ func TestRecordsService_Delete(t *testing.T) {
 		rw.WriteHeader(http.StatusNoContent)
 	})
 
-	err := client.Records.Delete("example.dedyn.io", "_acme-challenge", "TXT")
+	err := client.Records.Delete(context.Background(), "example.dedyn.io", "_acme-challenge", "TXT")
 	require.NoError(t, err)
 }
 
@@ -114,7 +115,7 @@ func TestRecordsService_Get(t *testing.T) {
 		}
 	})
 
-	record, err := client.Records.Get("example.dedyn.io", "_acme-challenge", "TXT")
+	record, err := client.Records.Get(context.Background(), "example.dedyn.io", "_acme-challenge", "TXT")
 	require.NoError(t, err)
 
 	expected := &RRSet{
@@ -161,7 +162,7 @@ func TestRecordsService_Update(t *testing.T) {
 		Records: []string{`"updated"`},
 	}
 
-	updatedRecord, err := client.Records.Update("example.dedyn.io", "_acme-challenge", "TXT", rrSet)
+	updatedRecord, err := client.Records.Update(context.Background(), "example.dedyn.io", "_acme-challenge", "TXT", rrSet)
 	require.NoError(t, err)
 
 	expected := &RRSet{
@@ -214,7 +215,7 @@ func TestRecordsService_Replace(t *testing.T) {
 		Created: nil,
 	}
 
-	updatedRecord, err := client.Records.Replace("example.dedyn.io", "_acme-challenge", "TXT", rrSet)
+	updatedRecord, err := client.Records.Replace(context.Background(), "example.dedyn.io", "_acme-challenge", "TXT", rrSet)
 	require.NoError(t, err)
 
 	expected := &RRSet{
@@ -257,7 +258,7 @@ func TestRecordsService_GetAll(t *testing.T) {
 		}
 	})
 
-	records, err := client.Records.GetAll("example.dedyn.io", nil)
+	records, err := client.Records.GetAll(context.Background(), "example.dedyn.io", nil)
 	require.NoError(t, err)
 
 	expected := []RRSet{

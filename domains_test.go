@@ -1,6 +1,7 @@
 package desec
 
 import (
+	"context"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -40,7 +41,7 @@ func TestDomainsService_Create(t *testing.T) {
 		}
 	})
 
-	newDomain, err := client.Domains.Create("example.com")
+	newDomain, err := client.Domains.Create(context.Background(), "example.com")
 	require.NoError(t, err)
 
 	expected := &Domain{
@@ -82,7 +83,7 @@ func TestDomainsService_Delete(t *testing.T) {
 		rw.WriteHeader(http.StatusNoContent)
 	})
 
-	err := client.Domains.Delete("example.com")
+	err := client.Domains.Delete(context.Background(), "example.com")
 	require.NoError(t, err)
 }
 
@@ -114,7 +115,7 @@ func TestDomainsService_Get(t *testing.T) {
 		}
 	})
 
-	domain, err := client.Domains.Get("example.com")
+	domain, err := client.Domains.Get(context.Background(), "example.com")
 	require.NoError(t, err)
 
 	expected := &Domain{
@@ -167,7 +168,7 @@ func TestDomainsService_GetAll(t *testing.T) {
 		}
 	})
 
-	domains, err := client.Domains.GetAll()
+	domains, err := client.Domains.GetAll(context.Background())
 	require.NoError(t, err)
 
 	expected := []Domain{
