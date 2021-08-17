@@ -27,14 +27,20 @@ type service struct {
 type ClientOptions struct {
 	// HTTPClient HTTP client used to communicate with the API.
 	HTTPClient *http.Client
+
+	// Maximum number of retries
+	RetryMax int
+
+	// Customer logger instance. Can be either Logger or LeveledLogger
+	Logger interface{}
 }
 
 // NewDefaultClientOptions creates a new ClientOptions with default values.
 func NewDefaultClientOptions() ClientOptions {
-	retryClient := retryablehttp.NewClient()
-	retryClient.RetryMax = 10
 	return ClientOptions{
-		HTTPClient: retryClient.StandardClient(),
+		HTTPClient: http.DefaultClient,
+		RetryMax:   10,
+		Logger:     nil,
 	}
 }
 
@@ -58,9 +64,13 @@ type Client struct {
 
 // New creates a new Client.
 func New(token string, opts ClientOptions) *Client {
+	retryClient := retryablehttp.NewClient()
+	retryClient.RetryMax = opts.RetryMax
+	retryClient.HTTPClient = opts.HTTPClient
+	retryClient.Logger = opts.Logger
 
 	client := &Client{
-		httpClient: opts.HTTPClient,
+		httpClient: retryClient.StandardClient(),
 		BaseURL:    defaultBaseURL,
 		token:      token,
 	}
