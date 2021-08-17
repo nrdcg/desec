@@ -10,7 +10,7 @@ import (
 	"net/url"
 	"path"
 
-	"github.com/nrdcg/desec/internal"
+	"github.com/hashicorp/go-retryablehttp"
 )
 
 const defaultBaseURL = "https://desec.io/api/v1/"
@@ -27,24 +27,14 @@ type service struct {
 type ClientOptions struct {
 	// HTTPClient HTTP client used to communicate with the API.
 	HTTPClient *http.Client
-	// LimitRead number of request per second.
-	LimitRead int
-	// LimitWrite number of request per second.
-	LimitWrite int
 }
 
 // NewDefaultClientOptions creates a new ClientOptions with default values.
 func NewDefaultClientOptions() ClientOptions {
+	retryClient := retryablehttp.NewClient()
+	retryClient.RetryMax = 10
 	return ClientOptions{
-		HTTPClient: http.DefaultClient,
-
-		// 10 requests every 1 second
-		// https://github.com/desec-io/desec-stack/blob/70b9b5aac5e57ef30492d45c99e8648ad03dd0ca/api/api/settings.py#L120
-		LimitRead: 10,
-
-		// 6 requests every 1 second
-		// https://github.com/desec-io/desec-stack/blob/70b9b5aac5e57ef30492d45c99e8648ad03dd0ca/api/api/settings.py#L121
-		LimitWrite: 6,
+		HTTPClient: retryClient.StandardClient(),
 	}
 }
 
@@ -68,8 +58,9 @@ type Client struct {
 
 // New creates a new Client.
 func New(token string, opts ClientOptions) *Client {
+
 	client := &Client{
-		httpClient: internal.New(opts.HTTPClient, opts.LimitRead, opts.LimitRead),
+		httpClient: opts.HTTPClient,
 		BaseURL:    defaultBaseURL,
 		token:      token,
 	}
