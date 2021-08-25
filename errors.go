@@ -3,7 +3,7 @@ package desec
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 )
 
@@ -32,7 +32,7 @@ func (e APIError) Unwrap() error {
 }
 
 func readError(resp *http.Response, er error) error {
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return &APIError{
 			StatusCode: resp.StatusCode,
@@ -55,7 +55,7 @@ func readError(resp *http.Response, er error) error {
 }
 
 func readRawError(resp *http.Response) error {
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return &APIError{
 			StatusCode: resp.StatusCode,

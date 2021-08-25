@@ -5,7 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/url"
 	"path"
@@ -126,7 +126,7 @@ func (c *Client) createEndpoint(parts ...string) (*url.URL, error) {
 }
 
 func handleResponse(resp *http.Response, respData interface{}) error {
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return &APIError{
 			StatusCode: resp.StatusCode,
