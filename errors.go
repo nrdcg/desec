@@ -7,12 +7,12 @@ import (
 	"net/http"
 )
 
-// NotFound Not found error.
-type NotFound struct {
+// NotFoundError Not found error.
+type NotFoundError struct {
 	Detail string `json:"detail"`
 }
 
-func (n NotFound) Error() string {
+func (n NotFoundError) Error() string {
 	return n.Detail
 }
 

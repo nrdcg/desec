@@ -145,7 +145,7 @@ func handleResponse(resp *http.Response, respData interface{}) error {
 func handleError(resp *http.Response) error {
 	switch resp.StatusCode {
 	case http.StatusNotFound:
-		return readError(resp, &NotFound{})
+		return readError(resp, &NotFoundError{})
 	default:
 		return readRawError(resp)
 	}
