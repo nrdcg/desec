@@ -39,7 +39,7 @@ type ClientOptions struct {
 func NewDefaultClientOptions() ClientOptions {
 	return ClientOptions{
 		HTTPClient: http.DefaultClient,
-		RetryMax:   10,
+		RetryMax:   5,
 		Logger:     nil,
 	}
 }
@@ -64,6 +64,7 @@ type Client struct {
 
 // New creates a new Client.
 func New(token string, opts ClientOptions) *Client {
+	// https://github.com/desec-io/desec-stack/blob/main/docs/rate-limits.rst
 	retryClient := retryablehttp.NewClient()
 	retryClient.RetryMax = opts.RetryMax
 	retryClient.HTTPClient = opts.HTTPClient
