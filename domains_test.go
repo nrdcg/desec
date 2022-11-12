@@ -140,6 +140,50 @@ func TestDomainsService_Get(t *testing.T) {
 	assert.Equal(t, expected, domain)
 }
 
+func TestDomainsService_GetResponsible(t *testing.T) {
+	mux := http.NewServeMux()
+	server := httptest.NewServer(mux)
+	t.Cleanup(server.Close)
+
+	client := New("token", NewDefaultClientOptions())
+	client.BaseURL = server.URL
+
+	mux.HandleFunc("/domains/", func(rw http.ResponseWriter, req *http.Request) {
+		if req.Method != http.MethodGet {
+			http.Error(rw, "invalid method", http.StatusMethodNotAllowed)
+			return
+		}
+		if req.URL.RawQuery != "owns_qname=git.dev.example.org" {
+			http.Error(rw, "owns_qname not passed correctly", http.StatusBadRequest)
+			return
+		}
+
+		file, err := os.Open("./fixtures/domains_getresponsible.json")
+		if err != nil {
+			http.Error(rw, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		defer func() { _ = file.Close() }()
+
+		_, err = io.Copy(rw, file)
+		if err != nil {
+			http.Error(rw, err.Error(), http.StatusInternalServerError)
+			return
+		}
+	})
+
+	domain, err := client.Domains.GetResponsible(context.Background(), "git.dev.example.org")
+	require.NoError(t, err)
+
+	expected := &Domain{
+		Name:       "dev.example.org",
+		MinimumTTL: 3600,
+		Created:    mustParseTime("2022-11-12T18:01:35.454616Z"),
+		Published:  mustParseTime("2022-11-12T18:03:19.516440Z"),
+	}
+	assert.Equal(t, expected, domain)
+}
+
 func TestDomainsService_GetAll(t *testing.T) {
 	mux := http.NewServeMux()
 	server := httptest.NewServer(mux)

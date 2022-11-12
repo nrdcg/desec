@@ -97,6 +97,45 @@ func (s *DomainsService) GetAll(ctx context.Context) ([]Domain, error) {
 	return domains, nil
 }
 
+// GetResponsible returns the responsible domain for a given DNS query name.
+// https://desec.readthedocs.io/en/latest/dns/domains.html#identifying-the-responsible-domain-for-a-dns-name
+func (s *DomainsService) GetResponsible(ctx context.Context, domainName string) (*Domain, error) {
+	endpoint, err := s.client.createEndpoint("domains")
+	if err != nil {
+		return nil, fmt.Errorf("failed to create endpoint: %w", err)
+	}
+
+	req, err := s.client.newRequest(ctx, http.MethodGet, endpoint, nil)
+	if err != nil {
+		return nil, err
+	}
+	queryValues := req.URL.Query()
+	queryValues.Add("owns_qname", domainName)
+	req.URL.RawQuery = queryValues.Encode()
+
+	resp, err := s.client.httpClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("failed to call API: %w", err)
+	}
+
+	defer func() { _ = resp.Body.Close() }()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, handleError(resp)
+	}
+
+	var domains []Domain
+	if err = handleResponse(resp, &domains); err != nil {
+		return nil, err
+	}
+
+	if len(domains) == 0 {
+		return nil, NotFoundError{Detail: "No responsible domain found"}
+	}
+
+	return &domains[0], nil
+}
+
 // Get retrieving a specific domain.
 // https://desec.readthedocs.io/en/latest/dns/domains.html#retrieving-a-specific-domain
 func (s *DomainsService) Get(ctx context.Context, domainName string) (*Domain, error) {
