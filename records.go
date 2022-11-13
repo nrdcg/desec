@@ -295,7 +295,13 @@ func (s *RecordsService) BulkDelete(ctx context.Context, domainName string, rrSe
 		return fmt.Errorf("failed to create endpoint: %w", err)
 	}
 
-	req, err := s.client.newRequest(ctx, http.MethodDelete, endpoint, rrSets)
+	deleteRRSets := make([]RRSet, len(rrSets))
+	for i, rrSet := range rrSets {
+		rrSet.Records = []string{}
+		deleteRRSets[i] = rrSet
+	}
+
+	req, err := s.client.newRequest(ctx, http.MethodPut, endpoint, deleteRRSets)
 	if err != nil {
 		return err
 	}
@@ -307,7 +313,7 @@ func (s *RecordsService) BulkDelete(ctx context.Context, domainName string, rrSe
 
 	defer func() { _ = resp.Body.Close() }()
 
-	if resp.StatusCode != http.StatusNoContent {
+	if resp.StatusCode != http.StatusOK {
 		return handleError(resp)
 	}
 
