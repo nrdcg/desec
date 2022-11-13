@@ -82,12 +82,23 @@ func (s *RecordsService) GetAll(ctx context.Context, domainName string, filter *
 // Create creates a new RRSet.
 // https://desec.readthedocs.io/en/latest/dns/rrsets.html#creating-a-tlsa-rrset
 func (s *RecordsService) Create(ctx context.Context, rrSet RRSet) (*RRSet, error) {
-	endpoint, err := s.client.createEndpoint("domains", rrSet.Domain, "rrsets")
+	newRRSets, err := s.BulkCreate(ctx, rrSet.Domain, []RRSet{rrSet})
+	if err != nil {
+		return nil, err
+	}
+
+	return &newRRSets[0], nil
+}
+
+// BulkCreate creates new RRSets in bulk.
+// https://desec.readthedocs.io/en/latest/dns/rrsets.html#bulk-creation-of-rrsets
+func (s *RecordsService) BulkCreate(ctx context.Context, domainName string, rrSets []RRSet) ([]RRSet, error) {
+	endpoint, err := s.client.createEndpoint("domains", domainName, "rrsets")
 	if err != nil {
 		return nil, fmt.Errorf("failed to create endpoint: %w", err)
 	}
 
-	req, err := s.client.newRequest(ctx, http.MethodPost, endpoint, rrSet)
+	req, err := s.client.newRequest(ctx, http.MethodPost, endpoint, rrSets)
 	if err != nil {
 		return nil, err
 	}
@@ -103,13 +114,13 @@ func (s *RecordsService) Create(ctx context.Context, rrSet RRSet) (*RRSet, error
 		return nil, handleError(resp)
 	}
 
-	var newRRSet RRSet
-	err = handleResponse(resp, &newRRSet)
+	var newRRSets []RRSet
+	err = handleResponse(resp, &newRRSets)
 	if err != nil {
 		return nil, err
 	}
 
-	return &newRRSet, nil
+	return newRRSets, nil
 }
 
 /*
