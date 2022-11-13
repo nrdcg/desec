@@ -153,7 +153,7 @@ func TestDomainsService_GetResponsible(t *testing.T) {
 			http.Error(rw, "invalid method", http.StatusMethodNotAllowed)
 			return
 		}
-		if req.URL.RawQuery != "owns_qname=git.dev.example.org" {
+		if req.URL.Query().Get("owns_qname") != "git.dev.example.org" {
 			http.Error(rw, "owns_qname not passed correctly", http.StatusBadRequest)
 			return
 		}
@@ -182,6 +182,28 @@ func TestDomainsService_GetResponsible(t *testing.T) {
 		Published:  mustParseTime("2022-11-12T18:03:19.516440Z"),
 	}
 	assert.Equal(t, expected, domain)
+}
+
+func TestDomainsService_GetResponsible_error(t *testing.T) {
+	mux := http.NewServeMux()
+	server := httptest.NewServer(mux)
+	t.Cleanup(server.Close)
+
+	client := New("token", NewDefaultClientOptions())
+	client.BaseURL = server.URL
+
+	mux.HandleFunc("/domains/", func(rw http.ResponseWriter, req *http.Request) {
+		if req.Method != http.MethodGet {
+			http.Error(rw, "invalid method", http.StatusMethodNotAllowed)
+			return
+		}
+
+		_, _ = rw.Write([]byte("[]"))
+	})
+
+	_, err := client.Domains.GetResponsible(context.Background(), "git.dev.example.org")
+	var notFoundError *NotFoundError
+	require.ErrorAs(t, err, &notFoundError)
 }
 
 func TestDomainsService_GetAll(t *testing.T) {
