@@ -240,16 +240,18 @@ func (s *RecordsService) Replace(ctx context.Context, domainName, subName, recor
 // Delete deletes a RRset.
 // https://desec.readthedocs.io/en/latest/dns/rrsets.html#deleting-an-rrset
 func (s *RecordsService) Delete(ctx context.Context, domainName, subName, recordType string) error {
-	if subName == "" {
-		subName = ApexZone
-	}
+	return s.BulkDelete(ctx, domainName, []RRSet{{SubName: subName, Type: recordType}})
+}
 
-	endpoint, err := s.client.createEndpoint("domains", domainName, "rrsets", subName, recordType)
+// BulkDelete deletes RRsets in bulk.
+// https://desec.readthedocs.io/en/latest/dns/rrsets.html#bulk-deletion-of-rrsets
+func (s *RecordsService) BulkDelete(ctx context.Context, domainName string, rrSets []RRSet) error {
+	endpoint, err := s.client.createEndpoint("domains", domainName, "rrsets")
 	if err != nil {
 		return fmt.Errorf("failed to create endpoint: %w", err)
 	}
 
-	req, err := s.client.newRequest(ctx, http.MethodDelete, endpoint, nil)
+	req, err := s.client.newRequest(ctx, http.MethodDelete, endpoint, rrSets)
 	if err != nil {
 		return err
 	}
