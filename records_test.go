@@ -80,7 +80,7 @@ func TestRecordsService_Delete(t *testing.T) {
 			http.Error(rw, "invalid method", http.StatusMethodNotAllowed)
 			return
 		}
-		defer req.Body.Close()
+		defer func() { _ = req.Body.Close() }()
 		var rrSets []RRSet
 		if err := json.NewDecoder(req.Body).Decode(&rrSets); err != nil {
 			http.Error(rw, "cannot unmarshal request body", http.StatusBadRequest)
