@@ -76,7 +76,7 @@ func TestRecordsService_Delete(t *testing.T) {
 	client.BaseURL = server.URL
 
 	mux.HandleFunc("/domains/example.dedyn.io/rrsets/", func(rw http.ResponseWriter, req *http.Request) {
-		if req.Method != http.MethodDelete {
+		if req.Method != http.MethodPut {
 			http.Error(rw, "invalid method", http.StatusMethodNotAllowed)
 			return
 		}
@@ -86,12 +86,12 @@ func TestRecordsService_Delete(t *testing.T) {
 			http.Error(rw, "cannot unmarshal request body", http.StatusBadRequest)
 			return
 		}
-		if len(rrSets) != 1 && rrSets[0].SubName != "_acme-challenge" && rrSets[0].Type != "TXT" {
+		if len(rrSets) != 1 && rrSets[0].SubName != "_acme-challenge" && rrSets[0].Type != "TXT" && len(rrSets[0].Records) != 0 {
 			http.Error(rw, "incorrect request body", http.StatusBadRequest)
 			return
 		}
 
-		rw.WriteHeader(http.StatusNoContent)
+		rw.WriteHeader(http.StatusOK)
 	})
 
 	err := client.Records.Delete(context.Background(), "example.dedyn.io", "_acme-challenge", "TXT")
