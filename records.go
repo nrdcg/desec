@@ -22,7 +22,7 @@ type RRSet struct {
 	Created *time.Time `json:"created,omitempty"`
 }
 
-// RRSetFilter a RRsets filter.
+// RRSetFilter a RRSets filter.
 type RRSetFilter struct {
 	Type    string
 	SubName string
@@ -39,7 +39,7 @@ type RecordsService struct {
 	Domains
 */
 
-// GetAll retrieving all RRsets in a zone.
+// GetAll retrieving all RRSets in a zone.
 // https://desec.readthedocs.io/en/latest/dns/rrsets.html#retrieving-all-rrsets-in-a-zone
 func (s *RecordsService) GetAll(ctx context.Context, domainName string, filter *RRSetFilter) ([]RRSet, error) {
 	endpoint, err := s.client.createEndpoint("domains", domainName, "rrsets")
@@ -281,13 +281,13 @@ func (s *RecordsService) Replace(ctx context.Context, domainName, subName, recor
 	return &updatedRRSet, nil
 }
 
-// Delete deletes a RRset.
+// Delete deletes a RRSet.
 // https://desec.readthedocs.io/en/latest/dns/rrsets.html#deleting-an-rrset
 func (s *RecordsService) Delete(ctx context.Context, domainName, subName, recordType string) error {
 	return s.BulkDelete(ctx, domainName, []RRSet{{SubName: subName, Type: recordType}})
 }
 
-// BulkDelete deletes RRsets in bulk.
+// BulkDelete deletes RRSets in bulk (PATCH).
 // https://desec.readthedocs.io/en/latest/dns/rrsets.html#bulk-deletion-of-rrsets
 func (s *RecordsService) BulkDelete(ctx context.Context, domainName string, rrSets []RRSet) error {
 	endpoint, err := s.client.createEndpoint("domains", domainName, "rrsets")
