@@ -206,6 +206,39 @@ func (s *RecordsService) Update(ctx context.Context, domainName, subName, record
 	return &updatedRRSet, nil
 }
 
+// BulkUpdate updates RRSets in bulk (PUT).
+// https://desec.readthedocs.io/en/latest/dns/rrsets.html#modifying-an-rrset
+func (s *RecordsService) BulkUpdate(ctx context.Context, domainName string, rrSets []RRSet) ([]RRSet, error) {
+	endpoint, err := s.client.createEndpoint("domains", domainName, "rrsets")
+	if err != nil {
+		return nil, fmt.Errorf("failed to create endpoint: %w", err)
+	}
+
+	req, err := s.client.newRequest(ctx, http.MethodPut, endpoint, rrSets)
+	if err != nil {
+		return nil, err
+	}
+
+	resp, err := s.client.httpClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("failed to call API: %w", err)
+	}
+
+	defer func() { _ = resp.Body.Close() }()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, handleError(resp)
+	}
+
+	var updatedRRSets []RRSet
+	err = handleResponse(resp, &updatedRRSets)
+	if err != nil {
+		return nil, err
+	}
+
+	return updatedRRSets, nil
+}
+
 // Replace replaces a RRSet (PUT).
 // https://desec.readthedocs.io/en/latest/dns/rrsets.html#modifying-an-rrset
 func (s *RecordsService) Replace(ctx context.Context, domainName, subName, recordType string, rrSet RRSet) (*RRSet, error) {
