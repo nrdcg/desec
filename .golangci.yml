@@ -26,11 +26,13 @@ linters-settings:
   gofumpt:
     extra-rules: true
   depguard:
-    list-type: blacklist
-    include-go-root: false
-    packages:
-      - github.com/sirupsen/logrus
-      - github.com/pkg/errors
+    rules:
+      main:
+        deny:
+          - pkg: "github.com/instana/testify"
+            desc: not allowed
+          - pkg: "github.com/pkg/errors"
+            desc: Should be replaced by standard lib errors package
   gocritic:
     enabled-tags:
       - diagnostic
@@ -86,11 +88,12 @@ linters:
 
 issues:
   exclude-use-default: false
-  max-per-linter: 0
+  max-issues-per-linter: 0
   max-same-issues: 0
   exclude:
     - 'ST1000: at least one file in a package should have a package comment'
     - 'package-comments: should have a package comment'
+    - 'fmt.Sprintf can be replaced with string addition'
   exclude-rules:
     - path: .*_test.go
       linters:

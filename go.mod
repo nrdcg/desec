@@ -3,8 +3,8 @@ module github.com/nrdcg/desec
 go 1.19
 
 require (
-	github.com/hashicorp/go-retryablehttp v0.7.2
-	github.com/stretchr/testify v1.8.1
+	github.com/hashicorp/go-retryablehttp v0.7.5
+	github.com/stretchr/testify v1.8.4
 )
 
 require (
