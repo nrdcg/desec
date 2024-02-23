@@ -2,6 +2,7 @@ package desec
 
 import (
 	"context"
+	"encoding/json"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -74,13 +75,23 @@ func TestRecordsService_Delete(t *testing.T) {
 	client := New("token", NewDefaultClientOptions())
 	client.BaseURL = server.URL
 
-	mux.HandleFunc("/domains/example.dedyn.io/rrsets/_acme-challenge/TXT/", func(rw http.ResponseWriter, req *http.Request) {
-		if req.Method != http.MethodDelete {
+	mux.HandleFunc("/domains/example.dedyn.io/rrsets/", func(rw http.ResponseWriter, req *http.Request) {
+		if req.Method != http.MethodPut {
 			http.Error(rw, "invalid method", http.StatusMethodNotAllowed)
 			return
 		}
+		defer func() { _ = req.Body.Close() }()
+		var rrSets []RRSet
+		if err := json.NewDecoder(req.Body).Decode(&rrSets); err != nil {
+			http.Error(rw, "cannot unmarshal request body", http.StatusBadRequest)
+			return
+		}
+		if len(rrSets) != 1 && rrSets[0].SubName != "_acme-challenge" && rrSets[0].Type != "TXT" && len(rrSets[0].Records) != 0 {
+			http.Error(rw, "incorrect request body", http.StatusBadRequest)
+			return
+		}
 
-		rw.WriteHeader(http.StatusNoContent)
+		rw.WriteHeader(http.StatusOK)
 	})
 
 	err := client.Records.Delete(context.Background(), "example.dedyn.io", "_acme-challenge", "TXT")
