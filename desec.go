@@ -8,7 +8,6 @@ import (
 	"io"
 	"net/http"
 	"net/url"
-	"path"
 
 	"github.com/hashicorp/go-retryablehttp"
 )
@@ -115,11 +114,7 @@ func (c *Client) createEndpoint(parts ...string) (*url.URL, error) {
 		return nil, err
 	}
 
-	endpoint, err := base.Parse(path.Join(base.Path, path.Join(parts...)))
-	if err != nil {
-		return nil, err
-	}
-
+	endpoint := base.JoinPath(parts...)
 	endpoint.Path += "/"
 
 	return endpoint, nil
