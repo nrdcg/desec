@@ -1,0 +1,7 @@
+{
+	"id": "2f133e8e-56a0-4b19-8e7e-f2e29c7ce263",
+	"domain": "example.com", 
+	"subname": "testing", 
+	"type": "A", 
+	"perm_write": true
+}

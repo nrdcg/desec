@@ -55,10 +55,11 @@ type Client struct {
 	common service // Reuse a single struct instead of allocating one for each service on the heap.
 
 	// Services used for talking to different parts of the deSEC API.
-	Account *AccountService
-	Tokens  *TokensService
-	Records *RecordsService
-	Domains *DomainsService
+	Account       *AccountService
+	Tokens        *TokensService
+	TokenPolicies *TokenPoliciesService
+	Records       *RecordsService
+	Domains       *DomainsService
 }
 
 // New creates a new Client.
@@ -79,6 +80,7 @@ func New(token string, opts ClientOptions) *Client {
 
 	client.Account = (*AccountService)(&client.common)
 	client.Tokens = (*TokensService)(&client.common)
+	client.TokenPolicies = (*TokenPoliciesService)(&client.common)
 	client.Records = (*RecordsService)(&client.common)
 	client.Domains = (*DomainsService)(&client.common)
 
@@ -145,3 +147,6 @@ func handleError(resp *http.Response) error {
 		return readRawError(resp)
 	}
 }
+
+// Pointer creates pointer of string.
+func Pointer[T string](v T) *T { return &v }
