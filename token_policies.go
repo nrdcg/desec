@@ -12,7 +12,7 @@ type TokenPolicy struct {
 	Domain          *string `json:"domain"`
 	SubName         *string `json:"subname"`
 	Type            *string `json:"type"`
-	WritePermission bool    `json:"perm_write,omitempty"` // Go `encoding/json` defaults boolean value is false
+	WritePermission bool    `json:"perm_write,omitempty"`
 }
 
 // TokenPoliciesService handles communication with the token policy related methods of the deSEC API.
@@ -22,9 +22,9 @@ type TokenPoliciesService struct {
 	client *Client
 }
 
-// GetPolicies retrieves token rrset's policies.
+// Get retrieves token rrset's policies.
 // https://desec.readthedocs.io/en/latest/auth/tokens.html#token-policy-management
-func (s *TokenPoliciesService) GetPolicies(ctx context.Context, tokenID string) ([]TokenPolicy, error) {
+func (s *TokenPoliciesService) Get(ctx context.Context, tokenID string) ([]TokenPolicy, error) {
 	endpoint, err := s.client.createEndpoint("auth", "tokens", tokenID, "policies", "rrsets")
 	if err != nil {
 		return nil, fmt.Errorf("failed to create endpoint: %w", err)
@@ -55,9 +55,9 @@ func (s *TokenPoliciesService) GetPolicies(ctx context.Context, tokenID string) 
 	return policies, nil
 }
 
-// CreatePolicy creates token policy.
+// Create creates token policy.
 // https://desec.readthedocs.io/en/latest/auth/tokens.html#create-additional-tokens
-func (s *TokenPoliciesService) CreatePolicy(ctx context.Context, tokenID string, policy TokenPolicy) (*TokenPolicy, error) {
+func (s *TokenPoliciesService) Create(ctx context.Context, tokenID string, policy TokenPolicy) (*TokenPolicy, error) {
 	endpoint, err := s.client.createEndpoint("auth", "tokens", tokenID, "policies", "rrsets")
 	if err != nil {
 		return nil, fmt.Errorf("failed to create endpoint: %w", err)
@@ -88,9 +88,9 @@ func (s *TokenPoliciesService) CreatePolicy(ctx context.Context, tokenID string,
 	return &tokenPolicy, nil
 }
 
-// DeletePolicy deletes a token rrset's policy.
+// Delete deletes a token rrset's policy.
 // https://desec.readthedocs.io/en/latest/auth/tokens.html#token-policy-management
-func (s *TokenPoliciesService) DeletePolicy(ctx context.Context, tokenID, policyID string) error {
+func (s *TokenPoliciesService) Delete(ctx context.Context, tokenID, policyID string) error {
 	endpoint, err := s.client.createEndpoint("auth", "tokens", tokenID, "policies", "rrsets", policyID)
 	if err != nil {
 		return fmt.Errorf("failed to create endpoint: %w", err)

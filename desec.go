@@ -57,9 +57,9 @@ type Client struct {
 	// Services used for talking to different parts of the deSEC API.
 	Account       *AccountService
 	Tokens        *TokensService
+	TokenPolicies *TokenPoliciesService
 	Records       *RecordsService
 	Domains       *DomainsService
-	TokenPolicies *TokenPoliciesService
 }
 
 // New creates a new Client.
@@ -80,9 +80,9 @@ func New(token string, opts ClientOptions) *Client {
 
 	client.Account = (*AccountService)(&client.common)
 	client.Tokens = (*TokensService)(&client.common)
+	client.TokenPolicies = (*TokenPoliciesService)(&client.common)
 	client.Records = (*RecordsService)(&client.common)
 	client.Domains = (*DomainsService)(&client.common)
-	client.TokenPolicies = (*TokenPoliciesService)(&client.common)
 
 	return client
 }
@@ -147,3 +147,6 @@ func handleError(resp *http.Response) error {
 		return readRawError(resp)
 	}
 }
+
+// Pointer creates pointer of string.
+func Pointer[T string](v T) *T { return &v }

@@ -12,7 +12,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestTokenPoliciesService_GetPolicies(t *testing.T) {
+func TestTokenPoliciesService_Get(t *testing.T) {
 	mux := http.NewServeMux()
 	server := httptest.NewServer(mux)
 	t.Cleanup(server.Close)
@@ -40,71 +40,28 @@ func TestTokenPoliciesService_GetPolicies(t *testing.T) {
 		}
 	})
 
-	tokens, err := client.TokenPolicies.GetPolicies(context.Background(), "aaa")
+	tokens, err := client.TokenPolicies.Get(context.Background(), "aaa")
 	require.NoError(t, err)
 
-	exampleDomain := "example.com"
-	exampleSubName := "testing"
-	exampleAType := "A"
 	expected := []TokenPolicy{
 		{
 			ID:              "7aed3f71-bc81-4f7e-90ae-8f0df0d1c211",
-			Domain:          &exampleDomain,
-			SubName:         &exampleSubName,
+			Domain:          Pointer("example.com"),
+			SubName:         Pointer("testing"),
 			WritePermission: false,
 		},
 		{
 			ID:              "fa6fdf60-6546-4cee-9168-5d144fe9339c",
-			Domain:          &exampleDomain,
-			SubName:         &exampleSubName,
-			Type:            &exampleAType,
+			Domain:          Pointer("example.com"),
+			SubName:         Pointer("testing"),
+			Type:            Pointer("A"),
 			WritePermission: true,
 		},
 	}
 	assert.Equal(t, expected, tokens)
 }
 
-// This test is of the expected default all null JSON policy (ie creating a default deny), it'll get used often, so a separate test will help make sure it is accounted for.
-func TestTokenPoliciesService_CreateEmptyPolicy(t *testing.T) {
-	mux := http.NewServeMux()
-	server := httptest.NewServer(mux)
-	t.Cleanup(server.Close)
-
-	client := New("token", NewDefaultClientOptions())
-	client.BaseURL = server.URL
-
-	mux.HandleFunc("/auth/tokens/aaa/policies/rrsets/", func(rw http.ResponseWriter, req *http.Request) {
-		if req.Method != http.MethodPost {
-			http.Error(rw, "invalid method", http.StatusMethodNotAllowed)
-			return
-		}
-
-		rw.WriteHeader(http.StatusCreated)
-		file, err := os.Open("./fixtures/tokens_policy_create_empty.json")
-		if err != nil {
-			http.Error(rw, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		defer func() { _ = file.Close() }()
-
-		_, err = io.Copy(rw, file)
-		if err != nil {
-			http.Error(rw, err.Error(), http.StatusInternalServerError)
-			return
-		}
-	})
-
-	tokens, err := client.TokenPolicies.CreatePolicy(context.Background(), "aaa", TokenPolicy{})
-	require.NoError(t, err)
-
-	expected := &TokenPolicy{
-		ID:              "a563a574-33c9-45d1-9201-e5577b42aaf1",
-		WritePermission: false,
-	}
-	assert.Equal(t, expected, tokens)
-}
-
-func TestTokenPoliciesService_CreatePolicy(t *testing.T) {
+func TestTokenPoliciesService_Create(t *testing.T) {
 	mux := http.NewServeMux()
 	server := httptest.NewServer(mux)
 	t.Cleanup(server.Close)
@@ -133,24 +90,75 @@ func TestTokenPoliciesService_CreatePolicy(t *testing.T) {
 		}
 	})
 
-	exampleDomain := "example.com"
-	exampleSubName := "testing"
-	exampleAType := "A"
+	mux.HandleFunc("/auth/tokens/bbb/policies/rrsets/", func(rw http.ResponseWriter, req *http.Request) {
+		if req.Method != http.MethodPost {
+			http.Error(rw, "invalid method", http.StatusMethodNotAllowed)
+			return
+		}
 
-	tokens, err := client.TokenPolicies.CreatePolicy(context.Background(), "aaa", TokenPolicy{Domain: &exampleDomain, SubName: &exampleSubName, Type: &exampleAType, WritePermission: true})
-	require.NoError(t, err)
+		rw.WriteHeader(http.StatusCreated)
+		file, err := os.Open("./fixtures/tokens_policy_create_empty.json")
+		if err != nil {
+			http.Error(rw, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		defer func() { _ = file.Close() }()
 
-	expected := &TokenPolicy{
-		ID:              "2f133e8e-56a0-4b19-8e7e-f2e29c7ce263",
-		Domain:          &exampleDomain,
-		SubName:         &exampleSubName,
-		Type:            &exampleAType,
-		WritePermission: true,
+		_, err = io.Copy(rw, file)
+		if err != nil {
+			http.Error(rw, err.Error(), http.StatusInternalServerError)
+			return
+		}
+	})
+
+	testCases := []struct {
+		desc     string
+		tokenID  string
+		policy   TokenPolicy
+		expected *TokenPolicy
+	}{
+		{
+			desc:    "all fields",
+			tokenID: "aaa",
+			policy: TokenPolicy{
+				Domain:          Pointer("example.com"),
+				SubName:         Pointer("testing"),
+				Type:            Pointer("A"),
+				WritePermission: true,
+			},
+			expected: &TokenPolicy{
+				ID:              "2f133e8e-56a0-4b19-8e7e-f2e29c7ce263",
+				Domain:          Pointer("example.com"),
+				SubName:         Pointer("testing"),
+				Type:            Pointer("A"),
+				WritePermission: true,
+			},
+		},
+		{
+			desc:    "all null JSON policy",
+			tokenID: "bbb",
+			policy:  TokenPolicy{},
+			expected: &TokenPolicy{
+				ID:              "a563a574-33c9-45d1-9201-e5577b42aaf1",
+				WritePermission: false,
+			},
+		},
 	}
-	assert.Equal(t, expected, tokens)
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			policies, err := client.TokenPolicies.Create(context.Background(), test.tokenID, test.policy)
+			require.NoError(t, err)
+
+			assert.Equal(t, test.expected, policies)
+		})
+	}
 }
 
-func TestTokenPoliciesService_DeletePolicy(t *testing.T) {
+func TestTokenPoliciesService_Delete(t *testing.T) {
 	mux := http.NewServeMux()
 	server := httptest.NewServer(mux)
 	t.Cleanup(server.Close)
@@ -167,6 +175,6 @@ func TestTokenPoliciesService_DeletePolicy(t *testing.T) {
 		rw.WriteHeader(http.StatusNoContent)
 	})
 
-	err := client.TokenPolicies.DeletePolicy(context.Background(), "aaa", "bbb")
+	err := client.TokenPolicies.Delete(context.Background(), "aaa", "bbb")
 	require.NoError(t, err)
 }
