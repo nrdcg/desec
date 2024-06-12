@@ -22,7 +22,7 @@ type RRSet struct {
 	Created *time.Time `json:"created,omitempty"`
 }
 
-// RRSetFilter a RRsets filter.
+// RRSetFilter a RRSets filter.
 type RRSetFilter struct {
 	Type    string
 	SubName string
@@ -39,7 +39,7 @@ type RecordsService struct {
 	Domains
 */
 
-// GetAll retrieving all RRsets in a zone.
+// GetAll retrieving all RRSets in a zone.
 // https://desec.readthedocs.io/en/latest/dns/rrsets.html#retrieving-all-rrsets-in-a-zone
 func (s *RecordsService) GetAll(ctx context.Context, domainName string, filter *RRSetFilter) ([]RRSet, error) {
 	endpoint, err := s.client.createEndpoint("domains", domainName, "rrsets")
@@ -82,12 +82,23 @@ func (s *RecordsService) GetAll(ctx context.Context, domainName string, filter *
 // Create creates a new RRSet.
 // https://desec.readthedocs.io/en/latest/dns/rrsets.html#creating-a-tlsa-rrset
 func (s *RecordsService) Create(ctx context.Context, rrSet RRSet) (*RRSet, error) {
-	endpoint, err := s.client.createEndpoint("domains", rrSet.Domain, "rrsets")
+	newRRSets, err := s.BulkCreate(ctx, rrSet.Domain, []RRSet{rrSet})
+	if err != nil {
+		return nil, err
+	}
+
+	return &newRRSets[0], nil
+}
+
+// BulkCreate creates new RRSets in bulk.
+// https://desec.readthedocs.io/en/latest/dns/rrsets.html#bulk-creation-of-rrsets
+func (s *RecordsService) BulkCreate(ctx context.Context, domainName string, rrSets []RRSet) ([]RRSet, error) {
+	endpoint, err := s.client.createEndpoint("domains", domainName, "rrsets")
 	if err != nil {
 		return nil, fmt.Errorf("failed to create endpoint: %w", err)
 	}
 
-	req, err := s.client.newRequest(ctx, http.MethodPost, endpoint, rrSet)
+	req, err := s.client.newRequest(ctx, http.MethodPost, endpoint, rrSets)
 	if err != nil {
 		return nil, err
 	}
@@ -103,13 +114,13 @@ func (s *RecordsService) Create(ctx context.Context, rrSet RRSet) (*RRSet, error
 		return nil, handleError(resp)
 	}
 
-	var newRRSet RRSet
-	err = handleResponse(resp, &newRRSet)
+	var newRRSets []RRSet
+	err = handleResponse(resp, &newRRSets)
 	if err != nil {
 		return nil, err
 	}
 
-	return &newRRSet, nil
+	return newRRSets, nil
 }
 
 /*
@@ -195,6 +206,39 @@ func (s *RecordsService) Update(ctx context.Context, domainName, subName, record
 	return &updatedRRSet, nil
 }
 
+// BulkUpdate updates RRSets in bulk (PUT).
+// https://desec.readthedocs.io/en/latest/dns/rrsets.html#modifying-an-rrset
+func (s *RecordsService) BulkUpdate(ctx context.Context, domainName string, rrSets []RRSet) ([]RRSet, error) {
+	endpoint, err := s.client.createEndpoint("domains", domainName, "rrsets")
+	if err != nil {
+		return nil, fmt.Errorf("failed to create endpoint: %w", err)
+	}
+
+	req, err := s.client.newRequest(ctx, http.MethodPut, endpoint, rrSets)
+	if err != nil {
+		return nil, err
+	}
+
+	resp, err := s.client.httpClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("failed to call API: %w", err)
+	}
+
+	defer func() { _ = resp.Body.Close() }()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, handleError(resp)
+	}
+
+	var updatedRRSets []RRSet
+	err = handleResponse(resp, &updatedRRSets)
+	if err != nil {
+		return nil, err
+	}
+
+	return updatedRRSets, nil
+}
+
 // Replace replaces a RRSet (PUT).
 // https://desec.readthedocs.io/en/latest/dns/rrsets.html#modifying-an-rrset
 func (s *RecordsService) Replace(ctx context.Context, domainName, subName, recordType string, rrSet RRSet) (*RRSet, error) {
@@ -237,19 +281,27 @@ func (s *RecordsService) Replace(ctx context.Context, domainName, subName, recor
 	return &updatedRRSet, nil
 }
 
-// Delete deletes a RRset.
+// Delete deletes a RRSet.
 // https://desec.readthedocs.io/en/latest/dns/rrsets.html#deleting-an-rrset
 func (s *RecordsService) Delete(ctx context.Context, domainName, subName, recordType string) error {
-	if subName == "" {
-		subName = ApexZone
-	}
+	return s.BulkDelete(ctx, domainName, []RRSet{{SubName: subName, Type: recordType}})
+}
 
-	endpoint, err := s.client.createEndpoint("domains", domainName, "rrsets", subName, recordType)
+// BulkDelete deletes RRSets in bulk (PATCH).
+// https://desec.readthedocs.io/en/latest/dns/rrsets.html#bulk-deletion-of-rrsets
+func (s *RecordsService) BulkDelete(ctx context.Context, domainName string, rrSets []RRSet) error {
+	endpoint, err := s.client.createEndpoint("domains", domainName, "rrsets")
 	if err != nil {
 		return fmt.Errorf("failed to create endpoint: %w", err)
 	}
 
-	req, err := s.client.newRequest(ctx, http.MethodDelete, endpoint, nil)
+	deleteRRSets := make([]RRSet, len(rrSets))
+	for i, rrSet := range rrSets {
+		rrSet.Records = []string{}
+		deleteRRSets[i] = rrSet
+	}
+
+	req, err := s.client.newRequest(ctx, http.MethodPut, endpoint, deleteRRSets)
 	if err != nil {
 		return err
 	}
@@ -261,7 +313,7 @@ func (s *RecordsService) Delete(ctx context.Context, domainName, subName, record
 
 	defer func() { _ = resp.Body.Close() }()
 
-	if resp.StatusCode != http.StatusNoContent {
+	if resp.StatusCode != http.StatusOK {
 		return handleError(resp)
 	}
 
