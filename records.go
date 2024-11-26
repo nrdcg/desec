@@ -269,14 +269,17 @@ func (s *RecordsService) Delete(ctx context.Context, domainName, subName, record
 }
 
 /*
-	Bulk operation
+	Bulk operations
 */
 
+// UpdateMode the mode used to bulk update operations.
 type UpdateMode string
 
 const (
-	FullResourceUpdateMode            = http.MethodPut
-	OnlyFields             UpdateMode = http.MethodPatch
+	// FullResourceUpdateMode the full resource must be specified.
+	FullResourceUpdateMode = http.MethodPut
+	// OnlyFields only fields you would like to modify need to be provided.
+	OnlyFields UpdateMode = http.MethodPatch
 )
 
 // BulkCreate creates new RRSets in bulk.
