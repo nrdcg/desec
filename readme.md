@@ -77,7 +77,7 @@ func main() {
 		panic(err)
 	}
 
-	domains, err := client.Domains.GetAll(context.Background())
+	domains, err := client.Domains.GetAllPagined(context.Background())
 	if err != nil {
 		panic(err)
 	}

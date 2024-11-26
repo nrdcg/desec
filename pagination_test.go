@@ -28,6 +28,11 @@ func Test_parseCursor(t *testing.T) {
 			header:   `<https://desec.io/api/v1/domains/{domain}/rrsets/?cursor=>; rel="first", <https://desec.io/api/v1/domains/{domain}/rrsets/?cursor=:prev_cursor>; rel="prev"`,
 			expected: &Cursors{First: "", Prev: ":prev_cursor", Next: ""},
 		},
+		{
+			desc:     "empty",
+			header:   ``,
+			expected: &Cursors{First: "", Prev: "", Next: ""},
+		},
 	}
 
 	for _, test := range testCases {

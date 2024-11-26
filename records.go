@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"net/url"
 	"time"
 )
 
@@ -62,48 +63,77 @@ type RecordsService struct {
 // GetAll retrieving all RRSets in a zone.
 // https://desec.readthedocs.io/en/latest/dns/rrsets.html#retrieving-all-rrsets-in-a-zone
 func (s *RecordsService) GetAll(ctx context.Context, domainName string, filter *RRSetFilter) ([]RRSet, error) {
-	endpoint, err := s.client.createEndpoint("domains", domainName, "rrsets")
-	if err != nil {
-		return nil, fmt.Errorf("failed to create endpoint: %w", err)
-	}
-
-	if filter != nil {
-		query := endpoint.Query()
-
-		if filter.Type != IgnoreFilter {
-			query.Set("type", filter.Type)
-		}
-
-		if filter.SubName != IgnoreFilter {
-			query.Set("subname", filter.SubName)
-		}
-
-		endpoint.RawQuery = query.Encode()
-	}
-
-	req, err := s.client.newRequest(ctx, http.MethodGet, endpoint, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	resp, err := s.client.httpClient.Do(req)
-	if err != nil {
-		return nil, fmt.Errorf("failed to call API: %w", err)
-	}
-
-	defer func() { _ = resp.Body.Close() }()
-
-	if resp.StatusCode != http.StatusOK {
-		return nil, handleError(resp)
-	}
-
-	var rrSets []RRSet
-	err = handleResponse(resp, &rrSets)
+	rrSets, _, err := s.GetAllPaginated(ctx, domainName, filter, "")
 	if err != nil {
 		return nil, err
 	}
 
 	return rrSets, nil
+}
+
+// GetAllPaginated retrieving all RRSets in a zone.
+// https://desec.readthedocs.io/en/latest/dns/rrsets.html#retrieving-all-rrsets-in-a-zone
+func (s *RecordsService) GetAllPaginated(ctx context.Context, domainName string, filter *RRSetFilter, cursor string) ([]RRSet, *Cursors, error) {
+	queryValues := url.Values{}
+
+	if filter != nil {
+		if filter.Type != IgnoreFilter {
+			queryValues.Set("type", filter.Type)
+		}
+
+		if filter.SubName != IgnoreFilter {
+			queryValues.Set("subname", filter.SubName)
+		}
+	}
+
+	queryValues.Set("cursor", cursor)
+
+	rrSets, cursors, err := s.getAll(ctx, domainName, queryValues)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return rrSets, cursors, nil
+}
+
+func (s *RecordsService) getAll(ctx context.Context, domainName string, query url.Values) ([]RRSet, *Cursors, error) {
+	endpoint, err := s.client.createEndpoint("domains", domainName, "rrsets")
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to create endpoint: %w", err)
+	}
+
+	req, err := s.client.newRequest(ctx, http.MethodGet, endpoint, nil)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	if len(query) > 0 {
+		req.URL.RawQuery = query.Encode()
+	}
+
+	resp, err := s.client.httpClient.Do(req)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to call API: %w", err)
+	}
+
+	defer func() { _ = resp.Body.Close() }()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, nil, handleError(resp)
+	}
+
+	cursors, err := parseCursor(resp.Header)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	var rrSets []RRSet
+	err = handleResponse(resp, &rrSets)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return rrSets, cursors, nil
 }
 
 // Create creates a new RRSet.

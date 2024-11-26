@@ -7,6 +7,8 @@ import (
 	"github.com/peterhellberg/link"
 )
 
+// Cursors allows to retrieve the next (or previous) page.
+// https://desec.readthedocs.io/en/latest/dns/rrsets.html#pagination
 type Cursors struct {
 	First string
 	Prev  string
