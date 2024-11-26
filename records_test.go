@@ -67,7 +67,80 @@ func TestRecordsService_Create(t *testing.T) {
 	assert.Equal(t, expected, newRecord)
 }
 
+func TestRecordsService_BulkCreate(t *testing.T) {
+	mux := http.NewServeMux()
+	server := httptest.NewServer(mux)
+	t.Cleanup(server.Close)
+
+	client := New("token", NewDefaultClientOptions())
+	client.BaseURL = server.URL
+
+	mux.HandleFunc("/domains/example.dedyn.io/rrsets/", func(rw http.ResponseWriter, req *http.Request) {
+		if req.Method != http.MethodPost {
+			http.Error(rw, "invalid method", http.StatusMethodNotAllowed)
+			return
+		}
+
+		rw.WriteHeader(http.StatusCreated)
+		file, err := os.Open("./fixtures/records_create_bulk.json")
+		if err != nil {
+			http.Error(rw, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		defer func() { _ = file.Close() }()
+
+		_, err = io.Copy(rw, file)
+		if err != nil {
+			http.Error(rw, err.Error(), http.StatusInternalServerError)
+			return
+		}
+	})
+
+	rrSets := []RRSet{{
+		Name:    "",
+		SubName: "_acme-challenge",
+		Type:    "TXT",
+		Records: []string{`"txt"`},
+		TTL:     300,
+	}}
+
+	newRecords, err := client.Records.BulkCreate(context.Background(), "example.dedyn.io", rrSets)
+	require.NoError(t, err)
+
+	expected := []RRSet{{
+		Name:    "_acme-challenge.example.dedyn.io.",
+		Domain:  "example.dedyn.io",
+		SubName: "_acme-challenge",
+		Type:    "TXT",
+		Records: []string{`"txt"`},
+		TTL:     300,
+		Created: mustParseTime("2020-05-06T11:46:07.641885Z"),
+	}}
+	assert.Equal(t, expected, newRecords)
+}
+
 func TestRecordsService_Delete(t *testing.T) {
+	mux := http.NewServeMux()
+	server := httptest.NewServer(mux)
+	t.Cleanup(server.Close)
+
+	client := New("token", NewDefaultClientOptions())
+	client.BaseURL = server.URL
+
+	mux.HandleFunc("/domains/example.dedyn.io/rrsets/_acme-challenge/TXT/", func(rw http.ResponseWriter, req *http.Request) {
+		if req.Method != http.MethodDelete {
+			http.Error(rw, "invalid method", http.StatusMethodNotAllowed)
+			return
+		}
+		defer func() { _ = req.Body.Close() }()
+		rw.WriteHeader(http.StatusNoContent)
+	})
+
+	err := client.Records.Delete(context.Background(), "example.dedyn.io", "_acme-challenge", "TXT")
+	require.NoError(t, err)
+}
+
+func TestRecordsService_BulkDelete(t *testing.T) {
 	mux := http.NewServeMux()
 	server := httptest.NewServer(mux)
 	t.Cleanup(server.Close)
@@ -80,7 +153,9 @@ func TestRecordsService_Delete(t *testing.T) {
 			http.Error(rw, "invalid method", http.StatusMethodNotAllowed)
 			return
 		}
+
 		defer func() { _ = req.Body.Close() }()
+
 		var rrSets []RRSet
 		if err := json.NewDecoder(req.Body).Decode(&rrSets); err != nil {
 			http.Error(rw, "cannot unmarshal request body", http.StatusBadRequest)
@@ -94,7 +169,15 @@ func TestRecordsService_Delete(t *testing.T) {
 		rw.WriteHeader(http.StatusOK)
 	})
 
-	err := client.Records.Delete(context.Background(), "example.dedyn.io", "_acme-challenge", "TXT")
+	rrSets := []RRSet{{
+		Name:    "",
+		SubName: "_acme-challenge",
+		Type:    "TXT",
+		Records: []string{`"txt"`},
+		TTL:     300,
+	}}
+
+	err := client.Records.BulkDelete(context.Background(), "example.dedyn.io", rrSets)
 	require.NoError(t, err)
 }
 
@@ -185,6 +268,56 @@ func TestRecordsService_Update(t *testing.T) {
 		TTL:     300,
 		Created: mustParseTime("2020-05-06T11:46:07.641885Z"),
 	}
+	assert.Equal(t, expected, updatedRecord)
+}
+
+func TestRecordsService_BulkUpdate(t *testing.T) {
+	mux := http.NewServeMux()
+	server := httptest.NewServer(mux)
+	t.Cleanup(server.Close)
+
+	client := New("token", NewDefaultClientOptions())
+	client.BaseURL = server.URL
+
+	mux.HandleFunc("/domains/example.dedyn.io/rrsets/", func(rw http.ResponseWriter, req *http.Request) {
+		if req.Method != http.MethodPut {
+			http.Error(rw, "invalid method", http.StatusMethodNotAllowed)
+			return
+		}
+
+		file, err := os.Open("./fixtures/records_update_bulk.json")
+		if err != nil {
+			http.Error(rw, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		defer func() { _ = file.Close() }()
+
+		_, err = io.Copy(rw, file)
+		if err != nil {
+			http.Error(rw, err.Error(), http.StatusInternalServerError)
+			return
+		}
+	})
+
+	rrSets := []RRSet{{
+		SubName: "_acme-challenge",
+		Type:    "TXT",
+		Records: []string{`"updated"`},
+		TTL:     300,
+	}}
+
+	updatedRecord, err := client.Records.BulkUpdate(context.Background(), "example.dedyn.io", rrSets)
+	require.NoError(t, err)
+
+	expected := []RRSet{{
+		Name:    "_acme-challenge.example.dedyn.io.",
+		Domain:  "example.dedyn.io",
+		SubName: "_acme-challenge",
+		Type:    "TXT",
+		Records: []string{`"updated"`},
+		TTL:     300,
+		Created: mustParseTime("2020-05-06T11:46:07.641885Z"),
+	}}
 	assert.Equal(t, expected, updatedRecord)
 }
 
