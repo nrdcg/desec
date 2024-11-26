@@ -272,6 +272,13 @@ func (s *RecordsService) Delete(ctx context.Context, domainName, subName, record
 	Bulk operation
 */
 
+type UpdateMode string
+
+const (
+	FullResourceUpdateMode            = http.MethodPut
+	OnlyFields             UpdateMode = http.MethodPatch
+)
+
 // BulkCreate creates new RRSets in bulk.
 // https://desec.readthedocs.io/en/latest/dns/rrsets.html#bulk-creation-of-rrsets
 func (s *RecordsService) BulkCreate(ctx context.Context, domainName string, rrSets []RRSet) ([]RRSet, error) {
@@ -305,15 +312,15 @@ func (s *RecordsService) BulkCreate(ctx context.Context, domainName string, rrSe
 	return newRRSets, nil
 }
 
-// BulkUpdate updates RRSets in bulk (PUT).
+// BulkUpdate updates RRSets in bulk.
 // https://desec.readthedocs.io/en/latest/dns/rrsets.html#bulk-modification-of-rrsets
-func (s *RecordsService) BulkUpdate(ctx context.Context, domainName string, rrSets []RRSet) ([]RRSet, error) {
+func (s *RecordsService) BulkUpdate(ctx context.Context, mode UpdateMode, domainName string, rrSets []RRSet) ([]RRSet, error) {
 	endpoint, err := s.client.createEndpoint("domains", domainName, "rrsets")
 	if err != nil {
 		return nil, fmt.Errorf("failed to create endpoint: %w", err)
 	}
 
-	req, err := s.client.newRequest(ctx, http.MethodPut, endpoint, rrSets)
+	req, err := s.client.newRequest(ctx, string(mode), endpoint, rrSets)
 	if err != nil {
 		return nil, err
 	}
@@ -329,43 +336,27 @@ func (s *RecordsService) BulkUpdate(ctx context.Context, domainName string, rrSe
 		return nil, handleError(resp)
 	}
 
-	var updatedRRSets []RRSet
-	err = handleResponse(resp, &updatedRRSets)
+	var results []RRSet
+	err = handleResponse(resp, &results)
 	if err != nil {
 		return nil, err
 	}
 
-	return updatedRRSets, nil
+	return results, nil
 }
 
-// BulkDelete deletes RRSets in bulk (PUT).
+// BulkDelete deletes RRSets in bulk (uses FullResourceUpdateMode).
 // https://desec.readthedocs.io/en/latest/dns/rrsets.html#bulk-deletion-of-rrsets
 func (s *RecordsService) BulkDelete(ctx context.Context, domainName string, rrSets []RRSet) error {
-	endpoint, err := s.client.createEndpoint("domains", domainName, "rrsets")
-	if err != nil {
-		return fmt.Errorf("failed to create endpoint: %w", err)
-	}
-
 	deleteRRSets := make([]RRSet, len(rrSets))
 	for i, rrSet := range rrSets {
 		rrSet.Records = []string{}
 		deleteRRSets[i] = rrSet
 	}
 
-	req, err := s.client.newRequest(ctx, http.MethodPut, endpoint, deleteRRSets)
+	_, err := s.BulkUpdate(ctx, FullResourceUpdateMode, domainName, deleteRRSets)
 	if err != nil {
 		return err
-	}
-
-	resp, err := s.client.httpClient.Do(req)
-	if err != nil {
-		return fmt.Errorf("failed to call API: %w", err)
-	}
-
-	defer func() { _ = resp.Body.Close() }()
-
-	if resp.StatusCode != http.StatusOK {
-		return handleError(resp)
 	}
 
 	return nil
