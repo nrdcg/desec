@@ -118,6 +118,7 @@ func TestRecordsService_Bulk(t *testing.T) {
 		Records: []string{`"txt"`},
 		TTL:     300,
 		Created: mustParseTime("2020-05-06T11:46:07.641885Z"),
+		Touched: mustParseTime("2020-05-06T11:46:07.641885Z"),
 	}}
 
 	for _, method := range []string{http.MethodPost, http.MethodPut, http.MethodPatch} {
