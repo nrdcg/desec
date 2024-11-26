@@ -413,7 +413,7 @@ func TestRecordsService_BulkUpdate(t *testing.T) {
 		TTL:     300,
 	}}
 
-	updatedRecord, err := client.Records.BulkUpdate(context.Background(), FullResourceUpdateMode, "example.dedyn.io", rrSets)
+	updatedRecord, err := client.Records.BulkUpdate(context.Background(), FullResource, "example.dedyn.io", rrSets)
 	require.NoError(t, err)
 
 	expected := []RRSet{{
