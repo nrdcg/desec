@@ -11,6 +11,9 @@ import (
 // https://desec.readthedocs.io/en/latest/dns/rrsets.html#accessing-the-zone-apex
 const ApexZone = "@"
 
+// IgnoreFilter is a specific value used to ignore a filter field.
+const IgnoreFilter = "#IGNORE#"
+
 // RRSet DNS Record Set.
 type RRSet struct {
 	Name    string     `json:"name,omitempty"`
@@ -27,6 +30,22 @@ type RRSet struct {
 type RRSetFilter struct {
 	Type    string
 	SubName string
+}
+
+// FilterRRSetOnlyOnType creates an RRSetFilter that ignore SubName.
+func FilterRRSetOnlyOnType(t string) RRSetFilter {
+	return RRSetFilter{
+		Type:    t,
+		SubName: IgnoreFilter,
+	}
+}
+
+// FilterRRSetOnlyOnSubName creates an RRSetFilter that ignore Type.
+func FilterRRSetOnlyOnSubName(n string) RRSetFilter {
+	return RRSetFilter{
+		Type:    IgnoreFilter,
+		SubName: n,
+	}
 }
 
 // RecordsService handles communication with the records related methods of the deSEC API.
@@ -50,8 +69,15 @@ func (s *RecordsService) GetAll(ctx context.Context, domainName string, filter *
 
 	if filter != nil {
 		query := endpoint.Query()
-		query.Set("type", filter.Type)
-		query.Set("subname", filter.SubName)
+
+		if filter.Type != IgnoreFilter {
+			query.Set("type", filter.Type)
+		}
+
+		if filter.SubName != IgnoreFilter {
+			query.Set("subname", filter.SubName)
+		}
+
 		endpoint.RawQuery = query.Encode()
 	}
 
