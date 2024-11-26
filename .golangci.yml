@@ -1,5 +1,26 @@
-run:
-  timeout: 5m
+linters:
+  enable-all: true
+  disable:
+    - exportloopref # deprecated
+    - sqlclosecheck # not relevant (SQL)
+    - rowserrcheck # not relevant (SQL)
+    - cyclop # duplicate of gocyclo
+    - lll
+    - dupl
+    - wsl
+    - nlreturn
+    - mnd
+    - err113
+    - wrapcheck
+    - exhaustive
+    - exhaustruct
+    - testpackage
+    - tparallel
+    - paralleltest
+    - prealloc
+    - forcetypeassert
+    - nilnil
+    - varnamelen
 
 linters-settings:
   govet:
@@ -47,31 +68,6 @@ linters-settings:
       rules:
         json: snake
 
-linters:
-  enable-all: true
-  disable:
-    - execinquery # deprecated
-    - gomnd # deprecated
-    - sqlclosecheck # not relevant (SQL)
-    - rowserrcheck # not relevant (SQL)
-    - cyclop # duplicate of gocyclo
-    - lll
-    - dupl
-    - wsl
-    - nlreturn
-    - mnd
-    - err113
-    - wrapcheck
-    - exhaustive
-    - exhaustruct
-    - testpackage
-    - tparallel
-    - paralleltest
-    - prealloc
-    - forcetypeassert
-    - nilnil
-    - varnamelen
-
 issues:
   exclude-use-default: false
   max-issues-per-linter: 0
@@ -86,3 +82,6 @@ issues:
         - funlen
   exclude-files:
     - 'client_secret_test.go'
+
+run:
+  timeout: 5m
