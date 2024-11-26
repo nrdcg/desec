@@ -63,6 +63,7 @@ func TestRecordsService_Create(t *testing.T) {
 		Records: []string{`"txt"`},
 		TTL:     300,
 		Created: mustParseTime("2020-05-06T11:46:07.641885Z"),
+		Touched: mustParseTime("2020-05-06T11:46:07.641885Z"),
 	}
 	assert.Equal(t, expected, newRecord)
 }
@@ -127,6 +128,7 @@ func TestRecordsService_Get(t *testing.T) {
 		Records: []string{`"txt"`},
 		TTL:     300,
 		Created: mustParseTime("2020-05-06T11:46:07.641885Z"),
+		Touched: mustParseTime("2020-05-06T11:46:07.641885Z"),
 	}
 	assert.Equal(t, expected, record)
 }
@@ -174,6 +176,7 @@ func TestRecordsService_Update(t *testing.T) {
 		Records: []string{`"updated"`},
 		TTL:     300,
 		Created: mustParseTime("2020-05-06T11:46:07.641885Z"),
+		Touched: mustParseTime("2020-05-06T11:46:07.641885Z"),
 	}
 	assert.Equal(t, expected, updatedRecord)
 }
@@ -227,6 +230,7 @@ func TestRecordsService_Replace(t *testing.T) {
 		Records: []string{`"updated"`},
 		TTL:     300,
 		Created: mustParseTime("2020-05-06T11:46:07.641885Z"),
+		Touched: mustParseTime("2020-05-06T11:46:07.641885Z"),
 	}
 	assert.Equal(t, expected, updatedRecord)
 }
@@ -271,6 +275,7 @@ func TestRecordsService_GetAll(t *testing.T) {
 			Records: []string{"10.10.10.10"},
 			TTL:     60,
 			Created: mustParseTime("2020-05-06T11:46:07.641885Z"),
+			Touched: mustParseTime("2020-05-06T11:46:07.641885Z"),
 		},
 		{
 			Name:    "example.dedyn.io.",
@@ -280,6 +285,7 @@ func TestRecordsService_GetAll(t *testing.T) {
 			Records: []string{"ns1.desec.io.", "ns2.desec.org."},
 			TTL:     3600,
 			Created: mustParseTime("2020-05-06T11:46:07.641885Z"),
+			Touched: mustParseTime("2020-05-06T11:46:07.641885Z"),
 		},
 	}
 	assert.Equal(t, expected, records)
@@ -333,6 +339,7 @@ func TestRecordsService_BulkCreate(t *testing.T) {
 		Records: []string{`"txt"`},
 		TTL:     300,
 		Created: mustParseTime("2020-05-06T11:46:07.641885Z"),
+		Touched: mustParseTime("2020-05-06T11:46:07.641885Z"),
 	}}
 	assert.Equal(t, expected, newRecords)
 }
@@ -424,6 +431,7 @@ func TestRecordsService_BulkUpdate(t *testing.T) {
 		Records: []string{`"updated"`},
 		TTL:     300,
 		Created: mustParseTime("2020-05-06T11:46:07.641885Z"),
+		Touched: mustParseTime("2020-05-06T11:46:07.641885Z"),
 	}}
 	assert.Equal(t, expected, updatedRecord)
 }

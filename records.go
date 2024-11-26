@@ -20,6 +20,7 @@ type RRSet struct {
 	Records []string   `json:"records"`
 	TTL     int        `json:"ttl,omitempty"`
 	Created *time.Time `json:"created,omitempty"`
+	Touched *time.Time `json:"touched,omitempty"`
 }
 
 // RRSetFilter a RRSets filter.
