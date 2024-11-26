@@ -22,7 +22,7 @@ type RRSet struct {
 	Created *time.Time `json:"created,omitempty"`
 }
 
-// RRSetFilter a RRsets filter.
+// RRSetFilter a RRSets filter.
 type RRSetFilter struct {
 	Type    string
 	SubName string
@@ -39,7 +39,7 @@ type RecordsService struct {
 	Domains
 */
 
-// GetAll retrieving all RRsets in a zone.
+// GetAll retrieving all RRSets in a zone.
 // https://desec.readthedocs.io/en/latest/dns/rrsets.html#retrieving-all-rrsets-in-a-zone
 func (s *RecordsService) GetAll(ctx context.Context, domainName string, filter *RRSetFilter) ([]RRSet, error) {
 	endpoint, err := s.client.createEndpoint("domains", domainName, "rrsets")
@@ -237,7 +237,7 @@ func (s *RecordsService) Replace(ctx context.Context, domainName, subName, recor
 	return &updatedRRSet, nil
 }
 
-// Delete deletes a RRset.
+// Delete deletes a RRSet.
 // https://desec.readthedocs.io/en/latest/dns/rrsets.html#deleting-an-rrset
 func (s *RecordsService) Delete(ctx context.Context, domainName, subName, recordType string) error {
 	if subName == "" {
@@ -263,6 +263,103 @@ func (s *RecordsService) Delete(ctx context.Context, domainName, subName, record
 
 	if resp.StatusCode != http.StatusNoContent {
 		return handleError(resp)
+	}
+
+	return nil
+}
+
+/*
+	Bulk operations
+*/
+
+// UpdateMode the mode used to bulk update operations.
+type UpdateMode string
+
+const (
+	// FullResourceUpdateMode the full resource must be specified.
+	FullResourceUpdateMode = http.MethodPut
+	// OnlyFields only fields you would like to modify need to be provided.
+	OnlyFields UpdateMode = http.MethodPatch
+)
+
+// BulkCreate creates new RRSets in bulk.
+// https://desec.readthedocs.io/en/latest/dns/rrsets.html#bulk-creation-of-rrsets
+func (s *RecordsService) BulkCreate(ctx context.Context, domainName string, rrSets []RRSet) ([]RRSet, error) {
+	endpoint, err := s.client.createEndpoint("domains", domainName, "rrsets")
+	if err != nil {
+		return nil, fmt.Errorf("failed to create endpoint: %w", err)
+	}
+
+	req, err := s.client.newRequest(ctx, http.MethodPost, endpoint, rrSets)
+	if err != nil {
+		return nil, err
+	}
+
+	resp, err := s.client.httpClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("failed to call API: %w", err)
+	}
+
+	defer func() { _ = resp.Body.Close() }()
+
+	if resp.StatusCode != http.StatusCreated {
+		return nil, handleError(resp)
+	}
+
+	var newRRSets []RRSet
+	err = handleResponse(resp, &newRRSets)
+	if err != nil {
+		return nil, err
+	}
+
+	return newRRSets, nil
+}
+
+// BulkUpdate updates RRSets in bulk.
+// https://desec.readthedocs.io/en/latest/dns/rrsets.html#bulk-modification-of-rrsets
+func (s *RecordsService) BulkUpdate(ctx context.Context, mode UpdateMode, domainName string, rrSets []RRSet) ([]RRSet, error) {
+	endpoint, err := s.client.createEndpoint("domains", domainName, "rrsets")
+	if err != nil {
+		return nil, fmt.Errorf("failed to create endpoint: %w", err)
+	}
+
+	req, err := s.client.newRequest(ctx, string(mode), endpoint, rrSets)
+	if err != nil {
+		return nil, err
+	}
+
+	resp, err := s.client.httpClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("failed to call API: %w", err)
+	}
+
+	defer func() { _ = resp.Body.Close() }()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, handleError(resp)
+	}
+
+	var results []RRSet
+	err = handleResponse(resp, &results)
+	if err != nil {
+		return nil, err
+	}
+
+	return results, nil
+}
+
+// BulkDelete deletes RRSets in bulk (uses FullResourceUpdateMode).
+// https://desec.readthedocs.io/en/latest/dns/rrsets.html#bulk-deletion-of-rrsets
+func (s *RecordsService) BulkDelete(ctx context.Context, domainName string, rrSets []RRSet) error {
+	deleteRRSets := make([]RRSet, len(rrSets))
+	for i, rrSet := range rrSets {
+		rrSet.Records = []string{}
+		deleteRRSets[i] = rrSet
+	}
+
+	_, err := s.BulkUpdate(ctx, FullResourceUpdateMode, domainName, deleteRRSets)
+	if err != nil {
+		return err
 	}
 
 	return nil
