@@ -69,7 +69,21 @@ func (s *DomainsService) Create(ctx context.Context, domainName string) (*Domain
 // GetAll listing domains.
 // https://desec.readthedocs.io/en/latest/dns/domains.html#listing-domains
 func (s *DomainsService) GetAll(ctx context.Context) ([]Domain, error) {
-	return s.getAll(ctx, nil)
+	domains, _, err := s.GetAllPaginated(ctx, "")
+	if err != nil {
+		return nil, err
+	}
+
+	return domains, nil
+}
+
+// GetAllPaginated listing domains.
+// https://desec.readthedocs.io/en/latest/dns/domains.html#listing-domains
+func (s *DomainsService) GetAllPaginated(ctx context.Context, cursor string) ([]Domain, *Cursors, error) {
+	queryValues := url.Values{}
+	queryValues.Set("cursor", cursor)
+
+	return s.getAll(ctx, queryValues)
 }
 
 // GetResponsible returns the responsible domain for a given DNS query name.
@@ -78,7 +92,7 @@ func (s *DomainsService) GetResponsible(ctx context.Context, domainName string) 
 	queryValues := url.Values{}
 	queryValues.Set("owns_qname", domainName)
 
-	domains, err := s.getAll(ctx, queryValues)
+	domains, _, err := s.getAll(ctx, queryValues)
 	if err != nil {
 		return nil, err
 	}
@@ -92,15 +106,15 @@ func (s *DomainsService) GetResponsible(ctx context.Context, domainName string) 
 
 // getAll listing domains.
 // https://desec.readthedocs.io/en/latest/dns/domains.html#listing-domains
-func (s *DomainsService) getAll(ctx context.Context, query url.Values) ([]Domain, error) {
+func (s *DomainsService) getAll(ctx context.Context, query url.Values) ([]Domain, *Cursors, error) {
 	endpoint, err := s.client.createEndpoint("domains")
 	if err != nil {
-		return nil, fmt.Errorf("failed to create endpoint: %w", err)
+		return nil, nil, fmt.Errorf("failed to create endpoint: %w", err)
 	}
 
 	req, err := s.client.newRequest(ctx, http.MethodGet, endpoint, nil)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	if len(query) > 0 {
@@ -109,22 +123,27 @@ func (s *DomainsService) getAll(ctx context.Context, query url.Values) ([]Domain
 
 	resp, err := s.client.httpClient.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("failed to call API: %w", err)
+		return nil, nil, fmt.Errorf("failed to call API: %w", err)
 	}
 
 	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, handleError(resp)
+		return nil, nil, handleError(resp)
+	}
+
+	cursors, err := parseCursor(resp.Header)
+	if err != nil {
+		return nil, nil, err
 	}
 
 	var domains []Domain
 	err = handleResponse(resp, &domains)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
-	return domains, nil
+	return domains, cursors, nil
 }
 
 // Get retrieving a specific domain.
