@@ -85,6 +85,20 @@ func TestRecordsService_Bulk(t *testing.T) {
 		} else {
 			rw.WriteHeader(http.StatusOK)
 		}
+
+		rw.WriteHeader(http.StatusCreated)
+		file, err := os.Open("./fixtures/records_create_bulk.json")
+		if err != nil {
+			http.Error(rw, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		defer func() { _ = file.Close() }()
+
+		_, err = io.Copy(rw, file)
+		if err != nil {
+			http.Error(rw, err.Error(), http.StatusInternalServerError)
+			return
+		}
 	})
 
 	record := RRSet{
@@ -96,12 +110,21 @@ func TestRecordsService_Bulk(t *testing.T) {
 		TTL:     300,
 	}
 
-	err := client.Records.Bulk(context.Background(), http.MethodPost, "example.dedyn.io", []RRSet{record})
-	require.NoError(t, err)
-	err = client.Records.Bulk(context.Background(), http.MethodPut, "example.dedyn.io", []RRSet{record})
-	require.NoError(t, err)
-	err = client.Records.Bulk(context.Background(), http.MethodPatch, "example.dedyn.io", []RRSet{record})
-	require.NoError(t, err)
+	expected := []RRSet{{
+		Name:    "_acme-challenge.example.dedyn.io.",
+		Domain:  "example.dedyn.io",
+		SubName: "_acme-challenge",
+		Type:    "TXT",
+		Records: []string{`"txt"`},
+		TTL:     300,
+		Created: mustParseTime("2020-05-06T11:46:07.641885Z"),
+	}}
+
+	for _, method := range []string{http.MethodPost, http.MethodPut, http.MethodPatch} {
+		resp, err := client.Records.Bulk(context.Background(), method, "example.dedyn.io", []RRSet{record})
+		assert.Equal(t, expected, resp)
+		require.NoError(t, err)
+	}
 }
 
 func TestRecordsService_Delete(t *testing.T) {
