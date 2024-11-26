@@ -277,8 +277,8 @@ func (s *RecordsService) Delete(ctx context.Context, domainName, subName, record
 type UpdateMode string
 
 const (
-	// FullResourceUpdateMode the full resource must be specified.
-	FullResourceUpdateMode = http.MethodPut
+	// FullResource the full resource must be specified.
+	FullResource UpdateMode = http.MethodPut
 	// OnlyFields only fields you would like to modify need to be provided.
 	OnlyFields UpdateMode = http.MethodPatch
 )
@@ -358,7 +358,7 @@ func (s *RecordsService) BulkDelete(ctx context.Context, domainName string, rrSe
 		deleteRRSets[i] = rrSet
 	}
 
-	_, err := s.BulkUpdate(ctx, FullResourceUpdateMode, domainName, deleteRRSets)
+	_, err := s.BulkUpdate(ctx, FullResource, domainName, deleteRRSets)
 	if err != nil {
 		return err
 	}
