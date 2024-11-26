@@ -267,3 +267,30 @@ func (s *RecordsService) Delete(ctx context.Context, domainName, subName, record
 
 	return nil
 }
+
+// Bulk to perform bulk operations on RRSets.
+// https://desec.readthedocs.io/en/latest/dns/rrsets.html#bulk-operations
+func (s *RecordsService) Bulk(ctx context.Context, method, domainName string, rrSets []RRSet) error {
+	endpoint, err := s.client.createEndpoint("domains", domainName, "rrsets")
+	if err != nil {
+		return fmt.Errorf("failed to create endpoint: %w", err)
+	}
+
+	req, err := s.client.newRequest(ctx, method, endpoint, rrSets)
+	if err != nil {
+		return err
+	}
+
+	resp, err := s.client.httpClient.Do(req)
+	if err != nil {
+		return fmt.Errorf("failed to call API: %w", err)
+	}
+
+	defer func() { _ = resp.Body.Close() }()
+
+	if resp.StatusCode != http.StatusOK {
+		return handleError(resp)
+	}
+
+	return nil
+}

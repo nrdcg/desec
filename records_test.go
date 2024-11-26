@@ -65,6 +65,35 @@ func TestRecordsService_Create(t *testing.T) {
 	}
 	assert.Equal(t, expected, newRecord)
 }
+func TestRecordsService_Bulk(t *testing.T) {
+	mux := http.NewServeMux()
+	server := httptest.NewServer(mux)
+	t.Cleanup(server.Close)
+
+	client := New("token", NewDefaultClientOptions())
+	client.BaseURL = server.URL
+
+	mux.HandleFunc("/domains/example.dedyn.io/rrsets/", func(rw http.ResponseWriter, req *http.Request) {
+		if req.Method != http.MethodPut {
+			http.Error(rw, "invalid method", http.StatusMethodNotAllowed)
+			return
+		}
+
+		rw.WriteHeader(http.StatusOK)
+	})
+
+	record := RRSet{
+		Name:    "",
+		Domain:  "example.dedyn.io",
+		SubName: "_acme-challenge",
+		Type:    "TXT",
+		Records: []string{`"txt"`},
+		TTL:     300,
+	}
+
+	err := client.Records.Bulk(context.Background(), http.MethodPut, "example.dedyn.io", []RRSet{record})
+	require.NoError(t, err)
+}
 
 func TestRecordsService_Delete(t *testing.T) {
 	mux := http.NewServeMux()
