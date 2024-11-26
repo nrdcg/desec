@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"slices"
 	"testing"
 	"time"
 
@@ -74,12 +75,16 @@ func TestRecordsService_Bulk(t *testing.T) {
 	client.BaseURL = server.URL
 
 	mux.HandleFunc("/domains/example.dedyn.io/rrsets/", func(rw http.ResponseWriter, req *http.Request) {
-		if req.Method != http.MethodPut {
+		if !slices.Contains([]string{http.MethodPut, http.MethodPost, http.MethodPatch}, req.Method) {
 			http.Error(rw, "invalid method", http.StatusMethodNotAllowed)
 			return
 		}
 
-		rw.WriteHeader(http.StatusOK)
+		if req.Method == http.MethodPost {
+			rw.WriteHeader(http.StatusCreated)
+		} else {
+			rw.WriteHeader(http.StatusOK)
+		}
 	})
 
 	record := RRSet{
@@ -91,7 +96,11 @@ func TestRecordsService_Bulk(t *testing.T) {
 		TTL:     300,
 	}
 
-	err := client.Records.Bulk(context.Background(), http.MethodPut, "example.dedyn.io", []RRSet{record})
+	err := client.Records.Bulk(context.Background(), http.MethodPost, "example.dedyn.io", []RRSet{record})
+	require.NoError(t, err)
+	err = client.Records.Bulk(context.Background(), http.MethodPut, "example.dedyn.io", []RRSet{record})
+	require.NoError(t, err)
+	err = client.Records.Bulk(context.Background(), http.MethodPatch, "example.dedyn.io", []RRSet{record})
 	require.NoError(t, err)
 }
 

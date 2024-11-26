@@ -288,7 +288,12 @@ func (s *RecordsService) Bulk(ctx context.Context, method, domainName string, rr
 
 	defer func() { _ = resp.Body.Close() }()
 
-	if resp.StatusCode != http.StatusOK {
+	expectedStatusCode := http.StatusOK
+	if method == http.MethodPost {
+		expectedStatusCode = http.StatusCreated
+	}
+
+	if resp.StatusCode != expectedStatusCode {
 		return handleError(resp)
 	}
 
