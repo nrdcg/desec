@@ -338,7 +338,7 @@ func (s *RecordsService) BulkUpdate(ctx context.Context, domainName string, rrSe
 	return updatedRRSets, nil
 }
 
-// BulkDelete deletes RRSets in bulk (PATCH).
+// BulkDelete deletes RRSets in bulk (PUT).
 // https://desec.readthedocs.io/en/latest/dns/rrsets.html#bulk-deletion-of-rrsets
 func (s *RecordsService) BulkDelete(ctx context.Context, domainName string, rrSets []RRSet) error {
 	endpoint, err := s.client.createEndpoint("domains", domainName, "rrsets")
