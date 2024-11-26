@@ -15,5 +15,6 @@
   ],
   "minimum_ttl": 3600,
   "name": "example.com",
-  "published": "2018-09-18T17:21:38.348112Z"
+  "published": "2018-09-18T17:21:38.348112Z",
+  "touched": "2018-09-18T17:21:38.348112Z"
 }

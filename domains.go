@@ -15,6 +15,7 @@ type Domain struct {
 	Keys       []DomainKey `json:"keys,omitempty"`
 	Created    *time.Time  `json:"created,omitempty"`
 	Published  *time.Time  `json:"published,omitempty"`
+	Touched    *time.Time  `json:"touched,omitempty"`
 }
 
 // DomainKey a domain key representation.

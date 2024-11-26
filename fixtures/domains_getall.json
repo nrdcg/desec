@@ -1,6 +1,7 @@
 [
   {
     "created": "2020-05-13T11:35:40.954616Z",
+    "touched": "2020-05-13T12:25:19.816440Z",
     "published": "2020-05-13T12:25:19.816440Z",
     "name": "example.org",
     "minimum_ttl": 3600
@@ -8,6 +9,7 @@
   {
     "created": "2020-05-05T23:17:36.101470Z",
     "published": "2020-05-06T12:13:06.138443Z",
+    "touched": "2020-05-06T12:13:06.138443Z",
     "name": "example.dedyn.io",
     "minimum_ttl": 60
   }

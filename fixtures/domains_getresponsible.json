@@ -2,6 +2,7 @@
   {
     "created": "2022-11-12T18:01:35.454616Z",
     "published": "2022-11-12T18:03:19.516440Z",
+    "touched": "2022-11-12T18:03:19.516440Z",
     "name": "dev.example.org",
     "minimum_ttl": 3600
   }
