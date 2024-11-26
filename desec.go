@@ -131,6 +131,10 @@ func handleResponse(resp *http.Response, respData interface{}) error {
 		}
 	}
 
+	if len(body) == 0 {
+		return nil
+	}
+
 	err = json.Unmarshal(body, respData)
 	if err != nil {
 		return fmt.Errorf("failed to umarshal response body: %w", err)
