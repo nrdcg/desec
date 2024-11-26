@@ -1,6 +1,6 @@
 # Go library for accessing the deSEC API
 
-[![Build Status](https://github.com/nrdcg/desec/workflows/Main/badge.svg?branch=master)](https://github.com/nrdcg/desec/actions)
+[![Build Status](https://github.com/nrdcg/desec/workflows/Main/badge.svg?branch=main)](https://github.com/nrdcg/desec/actions)
 [![PkgGoDev](https://pkg.go.dev/badge/github.com/nrdcg/desec)](https://pkg.go.dev/github.com/nrdcg/desec)
 [![Go Report Card](https://goreportcard.com/badge/github.com/nrdcg/desec)](https://goreportcard.com/report/github.com/nrdcg/desec)
 
