@@ -161,6 +161,49 @@ func (s *TokensService) Create(ctx context.Context, name string) (*Token, error)
 	return &token, nil
 }
 
+// Update a token.
+// https://desec.readthedocs.io/en/latest/auth/tokens.html#modifying-a-token
+func (s *TokensService) Update(ctx context.Context, id string, token *Token) (*Token, error) {
+	endpoint, err := s.client.createEndpoint("auth", "tokens", id)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create endpoint: %w", err)
+	}
+
+	// Copy values, including only fields that can be modified
+	req, err := s.client.newRequest(ctx, http.MethodPatch, endpoint, Token{
+		Owner:            token.Owner,
+		UserOverride:     token.UserOverride,
+		Name:             token.Name,
+		PermCreateDomain: token.PermCreateDomain,
+		PermDeleteDomain: token.PermDeleteDomain,
+		PermManageTokens: token.PermManageTokens,
+		AllowedSubnets:   token.AllowedSubnets,
+		AutoPolicy:       token.AutoPolicy,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	resp, err := s.client.httpClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("failed to call API: %w", err)
+	}
+
+	defer func() { _ = resp.Body.Close() }()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, handleError(resp)
+	}
+
+	result := &Token{}
+	err = handleResponse(resp, result)
+	if err != nil {
+		return nil, err
+	}
+
+	return result, nil
+}
+
 // Delete deletes tokens.
 // https://desec.readthedocs.io/en/latest/auth/tokens.html#delete-tokens
 func (s *TokensService) Delete(ctx context.Context, tokenID string) error {
