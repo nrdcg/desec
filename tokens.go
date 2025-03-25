@@ -7,12 +7,46 @@ import (
 	"time"
 )
 
+/* from https://desec.readthedocs.io/en/latest/auth/tokens.html#token-field-reference
+{
+		"id": "3a6b94b5-d20e-40bd-a7cc-521f5c79fab3",
+		"created": "2018-09-06T09:08:43.762697Z",
+		"last_used": null,
+		"owner": "youremailaddress@example.com"",
+		"user_override": null,
+		"max_age": "365 00:00:00",
+		"max_unused_period": null,
+		"name": "my new token",
+		"perm_create_domain": false,
+		"perm_delete_domain": false,
+		"perm_manage_tokens": false,
+		"allowed_subnets": [
+				"0.0.0.0/0",
+				"::/0"
+		],
+		"auto_policy": false,
+		"token": "4pnk7u-NHvrEkFzrhFDRTjGFyX_S"
+}
+*/
+
 // Token a token representation.
 type Token struct {
-	ID      string     `json:"id,omitempty"`
-	Name    string     `json:"name,omitempty"`
-	Value   string     `json:"token,omitempty"`
-	Created *time.Time `json:"created,omitempty"`
+	ID               string     `json:"id,omitempty"`
+	Created          *time.Time `json:"created,omitempty"`
+	LastUsed         *time.Time `json:"last_used,omitempty"`
+	Owner            string     `json:"owner,omitempty"`
+	UserOverride     string     `json:"user_override,omitempty"`
+	Name             string     `json:"name,omitempty"`
+	PermCreateDomain bool       `json:"perm_create_domain"`
+	PermDeleteDomain bool       `json:"perm_delete_domain"`
+	PermManageTokens bool       `json:"perm_manage_tokens"`
+	IsValid          bool       `json:"is_valid,omitempty"`
+	AllowedSubnets   []string   `json:"allowed_subnets,omitempty"`
+	AutoPolicy       bool       `json:"auto_policy"`
+	Value            string     `json:"token,omitempty"`
+	// Not currently implemented
+	// MaxAge           *time.Duration `json:"name,omitempty"`
+	// MaxUnusedPeriod  *time.Duration `json:"name,omitempty"`
 }
 
 // TokensService handles communication with the tokens related methods of the deSEC API.
