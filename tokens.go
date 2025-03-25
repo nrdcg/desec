@@ -90,6 +90,43 @@ func (s *TokensService) GetAll(ctx context.Context) ([]Token, error) {
 	return tokens, nil
 }
 
+// Get retrieves a specific token.
+// https://desec.readthedocs.io/en/latest/auth/tokens.html#retrieving-a-specific-token
+func (s *TokensService) Get(ctx context.Context, id string) (*Token, error) {
+	endpoint, err := s.client.createEndpoint("auth", "tokens", id)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create endpoint: %w", err)
+	}
+
+	req, err := s.client.newRequest(ctx, http.MethodGet, endpoint, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	resp, err := s.client.httpClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("failed to call API: %w", err)
+	}
+
+	defer func() { _ = resp.Body.Close() }()
+
+	if resp.StatusCode == http.StatusNotFound {
+		return nil, nil
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, handleError(resp)
+	}
+
+	token := &Token{}
+	err = handleResponse(resp, token)
+	if err != nil {
+		return nil, err
+	}
+
+	return token, nil
+}
+
 // Create creates additional tokens.
 // https://desec.readthedocs.io/en/latest/auth/tokens.html#create-additional-tokens
 func (s *TokensService) Create(ctx context.Context, name string) (*Token, error) {

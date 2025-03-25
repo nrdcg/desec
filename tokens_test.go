@@ -117,6 +117,55 @@ func TestTokensService_GetAll(t *testing.T) {
 	assert.Equal(t, expected, tokens)
 }
 
+func TestTokensService_Get(t *testing.T) {
+	mux := http.NewServeMux()
+	server := httptest.NewServer(mux)
+	t.Cleanup(server.Close)
+
+	client := New("token", NewDefaultClientOptions())
+	client.BaseURL = server.URL
+
+	mux.HandleFunc("/auth/tokens/3a6b94b5-d20e-40bd-a7cc-521f5c79fab3/", func(rw http.ResponseWriter, req *http.Request) {
+		if req.Method != http.MethodGet {
+			http.Error(rw, "invalid method", http.StatusMethodNotAllowed)
+			return
+		}
+
+		file, err := os.Open("./fixtures/tokens_get.json")
+		if err != nil {
+			http.Error(rw, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		defer func() { _ = file.Close() }()
+
+		_, err = io.Copy(rw, file)
+		if err != nil {
+			http.Error(rw, err.Error(), http.StatusInternalServerError)
+			return
+		}
+	})
+
+	token, err := client.Tokens.Get(context.Background(), "3a6b94b5-d20e-40bd-a7cc-521f5c79fab3")
+	require.NoError(t, err)
+
+	expected := &Token{
+		ID:               "3a6b94b5-d20e-40bd-a7cc-521f5c79fab3",
+		Created:          mustParseTime("2018-09-06T09:08:43.762697Z"),
+		Owner:            "youremailaddress@example.com",
+		Name:             "my new token",
+		PermCreateDomain: false,
+		PermDeleteDomain: false,
+		PermManageTokens: false,
+		AllowedSubnets: []string{
+			"0.0.0.0/0",
+			"::/0",
+		},
+		AutoPolicy: false,
+		Value:      "4pnk7u-NHvrEkFzrhFDRTjGFyX_S",
+	}
+	assert.Equal(t, expected, token)
+}
+
 func TestTokensService_Delete(t *testing.T) {
 	mux := http.NewServeMux()
 	server := httptest.NewServer(mux)
