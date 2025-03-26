@@ -92,6 +92,7 @@ func (s *TokensService) GetAll(ctx context.Context) ([]Token, error) {
 
 // Get retrieves a specific token.
 // https://desec.readthedocs.io/en/latest/auth/tokens.html#retrieving-a-specific-token
+// NOTE: This method used to retrieve all policies for a token, that is now done by GetAll
 func (s *TokensService) Get(ctx context.Context, id string) (*Token, error) {
 	endpoint, err := s.client.createEndpoint("auth", "tokens", id)
 	if err != nil {

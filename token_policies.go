@@ -22,9 +22,42 @@ type TokenPoliciesService struct {
 	client *Client
 }
 
-// Get retrieves token rrset's policies.
+// Get retrieves a specific token rrset policy.
 // https://desec.readthedocs.io/en/latest/auth/tokens.html#token-policy-management
-func (s *TokenPoliciesService) Get(ctx context.Context, tokenID string) ([]TokenPolicy, error) {
+func (s *TokenPoliciesService) Get(ctx context.Context, tokenID, policyID string) (*TokenPolicy, error) {
+	endpoint, err := s.client.createEndpoint("auth", "tokens", tokenID, "policies", "rrsets", policyID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create endpoint: %w", err)
+	}
+
+	req, err := s.client.newRequest(ctx, http.MethodGet, endpoint, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	resp, err := s.client.httpClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("failed to call API: %w", err)
+	}
+
+	defer func() { _ = resp.Body.Close() }()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, handleError(resp)
+	}
+
+	policy := &TokenPolicy{}
+	err = handleResponse(resp, policy)
+	if err != nil {
+		return nil, err
+	}
+
+	return policy, nil
+}
+
+// GetAll retrieves all rrset policies for a token.
+// https://desec.readthedocs.io/en/latest/auth/tokens.html#token-policy-management
+func (s *TokenPoliciesService) GetAll(ctx context.Context, tokenID string) ([]TokenPolicy, error) {
 	endpoint, err := s.client.createEndpoint("auth", "tokens", tokenID, "policies", "rrsets")
 	if err != nil {
 		return nil, fmt.Errorf("failed to create endpoint: %w", err)

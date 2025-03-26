@@ -1,16 +1,7 @@
-[
-	{
-		"id": "7aed3f71-bc81-4f7e-90ae-8f0df0d1c211",
-		"domain": "example.com",
-		"subname": "testing",
-		"type": null,
-		"perm_write": false
-	},
-	{
-		"id": "fa6fdf60-6546-4cee-9168-5d144fe9339c",
-		"domain": "example.com",
-		"subname": "testing",
-		"type": "A",
-		"perm_write": true
-	}
-]
+{
+	"id": "fa6fdf60-6546-4cee-9168-5d144fe9339c",
+	"domain": "example.com",
+	"subname": "testing",
+	"type": "A",
+	"perm_write": true
+}

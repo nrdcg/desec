@@ -20,7 +20,7 @@ func TestTokenPoliciesService_Get(t *testing.T) {
 	client := New("token", NewDefaultClientOptions())
 	client.BaseURL = server.URL
 
-	mux.HandleFunc("/auth/tokens/aaa/policies/rrsets/", func(rw http.ResponseWriter, req *http.Request) {
+	mux.HandleFunc("/auth/tokens/aaa/policies/rrsets/fa6fdf60-6546-4cee-9168-5d144fe9339c/", func(rw http.ResponseWriter, req *http.Request) {
 		if req.Method != http.MethodGet {
 			http.Error(rw, "invalid method", http.StatusMethodNotAllowed)
 			return
@@ -41,7 +41,48 @@ func TestTokenPoliciesService_Get(t *testing.T) {
 		}
 	})
 
-	tokens, err := client.TokenPolicies.Get(context.Background(), "aaa")
+	tokens, err := client.TokenPolicies.Get(context.Background(), "aaa", "fa6fdf60-6546-4cee-9168-5d144fe9339c")
+	require.NoError(t, err)
+
+	expected := &TokenPolicy{
+		ID:              "fa6fdf60-6546-4cee-9168-5d144fe9339c",
+		Domain:          Pointer("example.com"),
+		SubName:         Pointer("testing"),
+		Type:            Pointer("A"),
+		WritePermission: true,
+	}
+	assert.Equal(t, expected, tokens)
+}
+
+func TestTokenPoliciesService_GetAll(t *testing.T) {
+	mux := http.NewServeMux()
+	server := httptest.NewServer(mux)
+	t.Cleanup(server.Close)
+
+	client := New("token", NewDefaultClientOptions())
+	client.BaseURL = server.URL
+
+	mux.HandleFunc("/auth/tokens/aaa/policies/rrsets/", func(rw http.ResponseWriter, req *http.Request) {
+		if req.Method != http.MethodGet {
+			http.Error(rw, "invalid method", http.StatusMethodNotAllowed)
+			return
+		}
+
+		file, err := os.Open("./fixtures/tokens_policy_get_all.json")
+		if err != nil {
+			http.Error(rw, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		defer func() { _ = file.Close() }()
+
+		_, err = io.Copy(rw, file)
+		if err != nil {
+			http.Error(rw, err.Error(), http.StatusInternalServerError)
+			return
+		}
+	})
+
+	tokens, err := client.TokenPolicies.GetAll(context.Background(), "aaa")
 	require.NoError(t, err)
 
 	expected := []TokenPolicy{
