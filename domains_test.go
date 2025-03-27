@@ -27,11 +27,13 @@ func TestDomainsService_Create(t *testing.T) {
 		}
 
 		rw.WriteHeader(http.StatusCreated)
+
 		file, err := os.Open("./fixtures/domains_create.json")
 		if err != nil {
 			http.Error(rw, err.Error(), http.StatusInternalServerError)
 			return
 		}
+
 		defer func() { _ = file.Close() }()
 
 		_, err = io.Copy(rw, file)
@@ -107,6 +109,7 @@ func TestDomainsService_Get(t *testing.T) {
 			http.Error(rw, err.Error(), http.StatusInternalServerError)
 			return
 		}
+
 		defer func() { _ = file.Close() }()
 
 		_, err = io.Copy(rw, file)
@@ -155,6 +158,7 @@ func TestDomainsService_GetResponsible(t *testing.T) {
 			http.Error(rw, "invalid method", http.StatusMethodNotAllowed)
 			return
 		}
+
 		if req.URL.Query().Get("owns_qname") != "git.dev.example.org" {
 			http.Error(rw, "owns_qname not passed correctly", http.StatusBadRequest)
 			return
@@ -165,6 +169,7 @@ func TestDomainsService_GetResponsible(t *testing.T) {
 			http.Error(rw, err.Error(), http.StatusInternalServerError)
 			return
 		}
+
 		defer func() { _ = file.Close() }()
 
 		_, err = io.Copy(rw, file)
@@ -205,7 +210,9 @@ func TestDomainsService_GetResponsible_error(t *testing.T) {
 	})
 
 	_, err := client.Domains.GetResponsible(context.Background(), "git.dev.example.org")
+
 	var notFoundError *NotFoundError
+
 	require.ErrorAs(t, err, &notFoundError)
 }
 
@@ -228,6 +235,7 @@ func TestDomainsService_GetAll(t *testing.T) {
 			http.Error(rw, err.Error(), http.StatusInternalServerError)
 			return
 		}
+
 		defer func() { _ = file.Close() }()
 
 		_, err = io.Copy(rw, file)

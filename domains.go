@@ -58,6 +58,7 @@ func (s *DomainsService) Create(ctx context.Context, domainName string) (*Domain
 	}
 
 	var domain Domain
+
 	err = handleResponse(resp, &domain)
 	if err != nil {
 		return nil, err
@@ -138,6 +139,7 @@ func (s *DomainsService) getAll(ctx context.Context, query url.Values) ([]Domain
 	}
 
 	var domains []Domain
+
 	err = handleResponse(resp, &domains)
 	if err != nil {
 		return nil, nil, err
@@ -171,6 +173,7 @@ func (s *DomainsService) Get(ctx context.Context, domainName string) (*Domain, e
 	}
 
 	var domains Domain
+
 	err = handleResponse(resp, &domains)
 	if err != nil {
 		return nil, err

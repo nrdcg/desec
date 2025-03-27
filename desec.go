@@ -103,6 +103,7 @@ func (c *Client) newRequest(ctx context.Context, method string, endpoint fmt.Str
 	}
 
 	req.Header.Set("Content-Type", "application/json")
+
 	if c.token != "" {
 		req.Header.Set("Authorization", fmt.Sprintf("Token %s", c.token))
 	}

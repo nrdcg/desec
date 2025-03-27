@@ -29,11 +29,13 @@ func TestRecordsService_Create(t *testing.T) {
 		}
 
 		rw.WriteHeader(http.StatusCreated)
+
 		file, err := os.Open("./fixtures/records_create.json")
 		if err != nil {
 			http.Error(rw, err.Error(), http.StatusInternalServerError)
 			return
 		}
+
 		defer func() { _ = file.Close() }()
 
 		_, err = io.Copy(rw, file)
@@ -81,7 +83,9 @@ func TestRecordsService_Delete(t *testing.T) {
 			http.Error(rw, "invalid method", http.StatusMethodNotAllowed)
 			return
 		}
+
 		defer func() { _ = req.Body.Close() }()
+
 		rw.WriteHeader(http.StatusNoContent)
 	})
 
@@ -108,6 +112,7 @@ func TestRecordsService_Get(t *testing.T) {
 			http.Error(rw, err.Error(), http.StatusInternalServerError)
 			return
 		}
+
 		defer func() { _ = file.Close() }()
 
 		_, err = io.Copy(rw, file)
@@ -152,6 +157,7 @@ func TestRecordsService_Update(t *testing.T) {
 			http.Error(rw, err.Error(), http.StatusInternalServerError)
 			return
 		}
+
 		defer func() { _ = file.Close() }()
 
 		_, err = io.Copy(rw, file)
@@ -200,6 +206,7 @@ func TestRecordsService_Replace(t *testing.T) {
 			http.Error(rw, err.Error(), http.StatusInternalServerError)
 			return
 		}
+
 		defer func() { _ = file.Close() }()
 
 		_, err = io.Copy(rw, file)
@@ -254,6 +261,7 @@ func TestRecordsService_GetAll(t *testing.T) {
 			http.Error(rw, err.Error(), http.StatusInternalServerError)
 			return
 		}
+
 		defer func() { _ = file.Close() }()
 
 		_, err = io.Copy(rw, file)
@@ -306,11 +314,13 @@ func TestRecordsService_BulkCreate(t *testing.T) {
 		}
 
 		rw.WriteHeader(http.StatusCreated)
+
 		file, err := os.Open("./fixtures/records_create_bulk.json")
 		if err != nil {
 			http.Error(rw, err.Error(), http.StatusInternalServerError)
 			return
 		}
+
 		defer func() { _ = file.Close() }()
 
 		_, err = io.Copy(rw, file)
@@ -365,6 +375,7 @@ func TestRecordsService_BulkDelete(t *testing.T) {
 			http.Error(rw, "cannot unmarshal request body", http.StatusBadRequest)
 			return
 		}
+
 		if len(rrSets) != 1 && rrSets[0].SubName != "_acme-challenge" && rrSets[0].Type != "TXT" && len(rrSets[0].Records) != 0 {
 			http.Error(rw, "incorrect request body", http.StatusBadRequest)
 			return
@@ -404,6 +415,7 @@ func TestRecordsService_BulkUpdate(t *testing.T) {
 			http.Error(rw, err.Error(), http.StatusInternalServerError)
 			return
 		}
+
 		defer func() { _ = file.Close() }()
 
 		_, err = io.Copy(rw, file)

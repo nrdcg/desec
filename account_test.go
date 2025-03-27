@@ -31,6 +31,7 @@ func TestAccountClient_ObtainCaptcha(t *testing.T) {
 			http.Error(rw, err.Error(), http.StatusInternalServerError)
 			return
 		}
+
 		defer func() { _ = file.Close() }()
 
 		_, err = io.Copy(rw, file)
@@ -99,6 +100,7 @@ func TestAccountClient_Login(t *testing.T) {
 			http.Error(rw, err.Error(), http.StatusInternalServerError)
 			return
 		}
+
 		defer func() { _ = file.Close() }()
 
 		_, err = io.Copy(rw, file)
@@ -164,6 +166,7 @@ func TestAccountClient_RetrieveInformation(t *testing.T) {
 			http.Error(rw, err.Error(), http.StatusInternalServerError)
 			return
 		}
+
 		defer func() { _ = file.Close() }()
 
 		_, err = io.Copy(rw, file)

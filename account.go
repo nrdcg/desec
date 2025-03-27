@@ -62,6 +62,7 @@ func (s *AccountService) Login(ctx context.Context, email, password string) (*To
 	}
 
 	var token Token
+
 	err = handleResponse(resp, &token)
 	if err != nil {
 		return nil, err
@@ -126,6 +127,7 @@ func (s *AccountService) ObtainCaptcha(ctx context.Context) (*Captcha, error) {
 	}
 
 	var captcha Captcha
+
 	err = handleResponse(resp, &captcha)
 	if err != nil {
 		return nil, err
@@ -186,6 +188,7 @@ func (s *AccountService) RetrieveInformation(ctx context.Context) (*Account, err
 	}
 
 	var account Account
+
 	err = handleResponse(resp, &account)
 	if err != nil {
 		return nil, err

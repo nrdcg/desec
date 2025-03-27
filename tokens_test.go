@@ -27,11 +27,13 @@ func TestTokensService_Create(t *testing.T) {
 		}
 
 		rw.WriteHeader(http.StatusCreated)
+
 		file, err := os.Open("./fixtures/tokens_create.json")
 		if err != nil {
 			http.Error(rw, err.Error(), http.StatusInternalServerError)
 			return
 		}
+
 		defer func() { _ = file.Close() }()
 
 		_, err = io.Copy(rw, file)
@@ -72,6 +74,7 @@ func TestTokensService_GetAll(t *testing.T) {
 			http.Error(rw, err.Error(), http.StatusInternalServerError)
 			return
 		}
+
 		defer func() { _ = file.Close() }()
 
 		_, err = io.Copy(rw, file)

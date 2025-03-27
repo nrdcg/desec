@@ -47,6 +47,7 @@ func (s *TokensService) GetAll(ctx context.Context) ([]Token, error) {
 	}
 
 	var tokens []Token
+
 	err = handleResponse(resp, &tokens)
 	if err != nil {
 		return nil, err
@@ -80,6 +81,7 @@ func (s *TokensService) Create(ctx context.Context, name string) (*Token, error)
 	}
 
 	var token Token
+
 	err = handleResponse(resp, &token)
 	if err != nil {
 		return nil, err

@@ -47,6 +47,7 @@ func (s *TokenPoliciesService) Get(ctx context.Context, tokenID string) ([]Token
 	}
 
 	var policies []TokenPolicy
+
 	err = handleResponse(resp, &policies)
 	if err != nil {
 		return nil, err
@@ -80,6 +81,7 @@ func (s *TokenPoliciesService) Create(ctx context.Context, tokenID string, polic
 	}
 
 	var tokenPolicy TokenPolicy
+
 	err = handleResponse(resp, &tokenPolicy)
 	if err != nil {
 		return nil, err
@@ -111,5 +113,6 @@ func (s *TokenPoliciesService) Delete(ctx context.Context, tokenID, policyID str
 	if resp.StatusCode != http.StatusNoContent {
 		return handleError(resp)
 	}
+
 	return nil
 }

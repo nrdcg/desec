@@ -128,6 +128,7 @@ func (s *RecordsService) getAll(ctx context.Context, domainName string, query ur
 	}
 
 	var rrSets []RRSet
+
 	err = handleResponse(resp, &rrSets)
 	if err != nil {
 		return nil, nil, err
@@ -161,6 +162,7 @@ func (s *RecordsService) Create(ctx context.Context, rrSet RRSet) (*RRSet, error
 	}
 
 	var newRRSet RRSet
+
 	err = handleResponse(resp, &newRRSet)
 	if err != nil {
 		return nil, err
@@ -202,6 +204,7 @@ func (s *RecordsService) Get(ctx context.Context, domainName, subName, recordTyp
 	}
 
 	var rrSet RRSet
+
 	err = handleResponse(resp, &rrSet)
 	if err != nil {
 		return nil, err
@@ -244,6 +247,7 @@ func (s *RecordsService) Update(ctx context.Context, domainName, subName, record
 	}
 
 	var updatedRRSet RRSet
+
 	err = handleResponse(resp, &updatedRRSet)
 	if err != nil {
 		return nil, err
@@ -286,6 +290,7 @@ func (s *RecordsService) Replace(ctx context.Context, domainName, subName, recor
 	}
 
 	var updatedRRSet RRSet
+
 	err = handleResponse(resp, &updatedRRSet)
 	if err != nil {
 		return nil, err
@@ -364,6 +369,7 @@ func (s *RecordsService) BulkCreate(ctx context.Context, domainName string, rrSe
 	}
 
 	var newRRSets []RRSet
+
 	err = handleResponse(resp, &newRRSets)
 	if err != nil {
 		return nil, err
@@ -397,6 +403,7 @@ func (s *RecordsService) BulkUpdate(ctx context.Context, mode UpdateMode, domain
 	}
 
 	var results []RRSet
+
 	err = handleResponse(resp, &results)
 	if err != nil {
 		return nil, err
@@ -409,6 +416,7 @@ func (s *RecordsService) BulkUpdate(ctx context.Context, mode UpdateMode, domain
 // https://desec.readthedocs.io/en/latest/dns/rrsets.html#bulk-deletion-of-rrsets
 func (s *RecordsService) BulkDelete(ctx context.Context, domainName string, rrSets []RRSet) error {
 	deleteRRSets := make([]RRSet, len(rrSets))
+
 	for i, rrSet := range rrSets {
 		rrSet.Records = []string{}
 		deleteRRSets[i] = rrSet
