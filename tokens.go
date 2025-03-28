@@ -7,29 +7,9 @@ import (
 	"time"
 )
 
-/* from https://desec.readthedocs.io/en/latest/auth/tokens.html#token-field-reference
-{
-		"id": "3a6b94b5-d20e-40bd-a7cc-521f5c79fab3",
-		"created": "2018-09-06T09:08:43.762697Z",
-		"last_used": null,
-		"owner": "youremailaddress@example.com"",
-		"user_override": null,
-		"max_age": "365 00:00:00",
-		"max_unused_period": null,
-		"name": "my new token",
-		"perm_create_domain": false,
-		"perm_delete_domain": false,
-		"perm_manage_tokens": false,
-		"allowed_subnets": [
-				"0.0.0.0/0",
-				"::/0"
-		],
-		"auto_policy": false,
-		"token": "4pnk7u-NHvrEkFzrhFDRTjGFyX_S"
-}
-*/
-
 // Token a token representation.
+//
+// https://desec.readthedocs.io/en/latest/auth/tokens.html#token-field-reference
 type Token struct {
 	ID               string     `json:"id,omitempty"`
 	Created          *time.Time `json:"created,omitempty"`
@@ -92,7 +72,7 @@ func (s *TokensService) GetAll(ctx context.Context) ([]Token, error) {
 
 // Get retrieves a specific token.
 // https://desec.readthedocs.io/en/latest/auth/tokens.html#retrieving-a-specific-token
-// NOTE: This method used to retrieve all policies for a token, that is now done by GetAll
+// NOTE: This method used to retrieve all policies for a token, that is now done by GetAll.
 func (s *TokensService) Get(ctx context.Context, id string) (*Token, error) {
 	endpoint, err := s.client.createEndpoint("auth", "tokens", id)
 	if err != nil {
@@ -120,6 +100,7 @@ func (s *TokensService) Get(ctx context.Context, id string) (*Token, error) {
 	}
 
 	token := &Token{}
+
 	err = handleResponse(resp, token)
 	if err != nil {
 		return nil, err
@@ -197,6 +178,7 @@ func (s *TokensService) Update(ctx context.Context, id string, token *Token) (*T
 	}
 
 	result := &Token{}
+
 	err = handleResponse(resp, result)
 	if err != nil {
 		return nil, err
