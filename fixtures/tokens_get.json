@@ -1,0 +1,19 @@
+{
+	"id": "3a6b94b5-d20e-40bd-a7cc-521f5c79fab3",
+	"created": "2018-09-06T09:08:43.762697Z",
+	"last_used": null,
+	"owner": "youremailaddress@example.com",
+	"user_override": null,
+	"max_age": "365 00:00:00",
+	"max_unused_period": null,
+	"name": "my new token",
+	"perm_create_domain": false,
+	"perm_delete_domain": false,
+	"perm_manage_tokens": false,
+	"allowed_subnets": [
+			"0.0.0.0/0",
+			"::/0"
+	],
+	"auto_policy": false,
+	"token": "4pnk7u-NHvrEkFzrhFDRTjGFyX_S"
+}

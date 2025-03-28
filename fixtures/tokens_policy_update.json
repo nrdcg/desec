@@ -3,5 +3,5 @@
 	"domain": "example.com",
 	"subname": "testing",
 	"type": "A",
-	"perm_write": true
+	"perm_write": false
 }
