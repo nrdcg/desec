@@ -8,6 +8,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"time"
 
 	"github.com/hashicorp/go-retryablehttp"
 )
@@ -37,7 +38,7 @@ type ClientOptions struct {
 // NewDefaultClientOptions creates a new ClientOptions with default values.
 func NewDefaultClientOptions() ClientOptions {
 	return ClientOptions{
-		HTTPClient: http.DefaultClient,
+		HTTPClient: &http.Client{Timeout: 10 * time.Second},
 		RetryMax:   5,
 		Logger:     nil,
 	}
