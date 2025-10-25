@@ -17,10 +17,12 @@ linters:
     - exhaustive
     - exhaustruct
     - forcetypeassert
+    - funcorder
     - lll
     - mnd
     - nilnil
     - nlreturn
+    - noinlineerr
     - paralleltest
     - prealloc
     - rowserrcheck # not relevant (SQL)
@@ -29,6 +31,7 @@ linters:
     - tparallel
     - varnamelen
     - wrapcheck
+    - wsl # deprecated
 
   settings:
     depguard:

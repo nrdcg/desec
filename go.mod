@@ -1,11 +1,11 @@
 module github.com/nrdcg/desec
 
-go 1.22
+go 1.23
 
 require (
-	github.com/hashicorp/go-retryablehttp v0.7.7
+	github.com/hashicorp/go-retryablehttp v0.7.8
 	github.com/peterhellberg/link v1.2.0
-	github.com/stretchr/testify v1.10.0
+	github.com/stretchr/testify v1.11.1
 )
 
 require (
