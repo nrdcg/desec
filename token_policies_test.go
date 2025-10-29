@@ -2,10 +2,7 @@ package desec
 
 import (
 	"context"
-	"io"
 	"net/http"
-	"net/http/httptest"
-	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -13,33 +10,10 @@ import (
 )
 
 func TestTokenPoliciesService_Get(t *testing.T) {
-	mux := http.NewServeMux()
-	server := httptest.NewServer(mux)
-	t.Cleanup(server.Close)
+	client, mux := setupTest(t, "token")
 
-	client := New("token", NewDefaultClientOptions())
-	client.BaseURL = server.URL
-
-	mux.HandleFunc("/auth/tokens/aaa/policies/rrsets/", func(rw http.ResponseWriter, req *http.Request) {
-		if req.Method != http.MethodGet {
-			http.Error(rw, "invalid method", http.StatusMethodNotAllowed)
-			return
-		}
-
-		file, err := os.Open("./fixtures/tokens_policy_get_all.json")
-		if err != nil {
-			http.Error(rw, err.Error(), http.StatusInternalServerError)
-			return
-		}
-
-		defer func() { _ = file.Close() }()
-
-		_, err = io.Copy(rw, file)
-		if err != nil {
-			http.Error(rw, err.Error(), http.StatusInternalServerError)
-			return
-		}
-	})
+	mux.HandleFunc("GET /auth/tokens/aaa/policies/rrsets/",
+		fromFixtures("tokens_policy_get_all.json", http.StatusOK))
 
 	tokens, err := client.TokenPolicies.Get(context.Background(), "aaa")
 	require.NoError(t, err)
@@ -63,33 +37,10 @@ func TestTokenPoliciesService_Get(t *testing.T) {
 }
 
 func TestTokenPoliciesService_GetOne(t *testing.T) {
-	mux := http.NewServeMux()
-	server := httptest.NewServer(mux)
-	t.Cleanup(server.Close)
+	client, mux := setupTest(t, "token")
 
-	client := New("token", NewDefaultClientOptions())
-	client.BaseURL = server.URL
-
-	mux.HandleFunc("/auth/tokens/aaa/policies/rrsets/fa6fdf60-6546-4cee-9168-5d144fe9339c/", func(rw http.ResponseWriter, req *http.Request) {
-		if req.Method != http.MethodGet {
-			http.Error(rw, "invalid method", http.StatusMethodNotAllowed)
-			return
-		}
-
-		file, err := os.Open("./fixtures/tokens_policy_get.json")
-		if err != nil {
-			http.Error(rw, err.Error(), http.StatusInternalServerError)
-			return
-		}
-
-		defer func() { _ = file.Close() }()
-
-		_, err = io.Copy(rw, file)
-		if err != nil {
-			http.Error(rw, err.Error(), http.StatusInternalServerError)
-			return
-		}
-	})
+	mux.HandleFunc("GET /auth/tokens/aaa/policies/rrsets/fa6fdf60-6546-4cee-9168-5d144fe9339c/",
+		fromFixtures("tokens_policy_get.json", http.StatusOK))
 
 	tokens, err := client.TokenPolicies.GetOne(context.Background(), "aaa", "fa6fdf60-6546-4cee-9168-5d144fe9339c")
 	require.NoError(t, err)
@@ -105,33 +56,10 @@ func TestTokenPoliciesService_GetOne(t *testing.T) {
 }
 
 func TestTokenPoliciesService_Update(t *testing.T) {
-	mux := http.NewServeMux()
-	server := httptest.NewServer(mux)
-	t.Cleanup(server.Close)
+	client, mux := setupTest(t, "token")
 
-	client := New("token", NewDefaultClientOptions())
-	client.BaseURL = server.URL
-
-	mux.HandleFunc("/auth/tokens/aaa/policies/rrsets/fa6fdf60-6546-4cee-9168-5d144fe9339c/", func(rw http.ResponseWriter, req *http.Request) {
-		if req.Method != http.MethodPatch {
-			http.Error(rw, "invalid method", http.StatusMethodNotAllowed)
-			return
-		}
-
-		file, err := os.Open("./fixtures/tokens_policy_update.json")
-		if err != nil {
-			http.Error(rw, err.Error(), http.StatusInternalServerError)
-			return
-		}
-
-		defer func() { _ = file.Close() }()
-
-		_, err = io.Copy(rw, file)
-		if err != nil {
-			http.Error(rw, err.Error(), http.StatusInternalServerError)
-			return
-		}
-	})
+	mux.HandleFunc("PATCH /auth/tokens/aaa/policies/rrsets/fa6fdf60-6546-4cee-9168-5d144fe9339c/",
+		fromFixtures("tokens_policy_update.json", http.StatusOK))
 
 	tokens, err := client.TokenPolicies.Update(context.Background(), "aaa", "fa6fdf60-6546-4cee-9168-5d144fe9339c", TokenPolicy{
 		WritePermission: false,
@@ -149,33 +77,9 @@ func TestTokenPoliciesService_Update(t *testing.T) {
 }
 
 func TestTokenPoliciesService_GetAll(t *testing.T) {
-	mux := http.NewServeMux()
-	server := httptest.NewServer(mux)
-	t.Cleanup(server.Close)
+	client, mux := setupTest(t, "token")
 
-	client := New("token", NewDefaultClientOptions())
-	client.BaseURL = server.URL
-
-	mux.HandleFunc("/auth/tokens/aaa/policies/rrsets/", func(rw http.ResponseWriter, req *http.Request) {
-		if req.Method != http.MethodGet {
-			http.Error(rw, "invalid method", http.StatusMethodNotAllowed)
-			return
-		}
-
-		file, err := os.Open("./fixtures/tokens_policy_get_all.json")
-		if err != nil {
-			http.Error(rw, err.Error(), http.StatusInternalServerError)
-			return
-		}
-
-		defer func() { _ = file.Close() }()
-
-		_, err = io.Copy(rw, file)
-		if err != nil {
-			http.Error(rw, err.Error(), http.StatusInternalServerError)
-			return
-		}
-	})
+	mux.HandleFunc("GET /auth/tokens/aaa/policies/rrsets/", fromFixtures("tokens_policy_get_all.json", http.StatusOK))
 
 	tokens, err := client.TokenPolicies.GetAll(context.Background(), "aaa")
 	require.NoError(t, err)
@@ -199,58 +103,13 @@ func TestTokenPoliciesService_GetAll(t *testing.T) {
 }
 
 func TestTokenPoliciesService_Create(t *testing.T) {
-	mux := http.NewServeMux()
-	server := httptest.NewServer(mux)
-	t.Cleanup(server.Close)
+	client, mux := setupTest(t, "token")
 
-	client := New("token", NewDefaultClientOptions())
-	client.BaseURL = server.URL
+	mux.HandleFunc("POST /auth/tokens/aaa/policies/rrsets/",
+		fromFixtures("tokens_policy_create.json", http.StatusCreated))
 
-	mux.HandleFunc("/auth/tokens/aaa/policies/rrsets/", func(rw http.ResponseWriter, req *http.Request) {
-		if req.Method != http.MethodPost {
-			http.Error(rw, "invalid method", http.StatusMethodNotAllowed)
-			return
-		}
-
-		rw.WriteHeader(http.StatusCreated)
-
-		file, err := os.Open("./fixtures/tokens_policy_create.json")
-		if err != nil {
-			http.Error(rw, err.Error(), http.StatusInternalServerError)
-			return
-		}
-
-		defer func() { _ = file.Close() }()
-
-		_, err = io.Copy(rw, file)
-		if err != nil {
-			http.Error(rw, err.Error(), http.StatusInternalServerError)
-			return
-		}
-	})
-
-	mux.HandleFunc("/auth/tokens/bbb/policies/rrsets/", func(rw http.ResponseWriter, req *http.Request) {
-		if req.Method != http.MethodPost {
-			http.Error(rw, "invalid method", http.StatusMethodNotAllowed)
-			return
-		}
-
-		rw.WriteHeader(http.StatusCreated)
-
-		file, err := os.Open("./fixtures/tokens_policy_create_empty.json")
-		if err != nil {
-			http.Error(rw, err.Error(), http.StatusInternalServerError)
-			return
-		}
-
-		defer func() { _ = file.Close() }()
-
-		_, err = io.Copy(rw, file)
-		if err != nil {
-			http.Error(rw, err.Error(), http.StatusInternalServerError)
-			return
-		}
-	})
+	mux.HandleFunc("POST /auth/tokens/bbb/policies/rrsets/",
+		fromFixtures("tokens_policy_create_empty.json", http.StatusCreated))
 
 	testCases := []struct {
 		desc     string
@@ -299,19 +158,9 @@ func TestTokenPoliciesService_Create(t *testing.T) {
 }
 
 func TestTokenPoliciesService_Delete(t *testing.T) {
-	mux := http.NewServeMux()
-	server := httptest.NewServer(mux)
-	t.Cleanup(server.Close)
+	client, mux := setupTest(t, "token")
 
-	client := New("token", NewDefaultClientOptions())
-	client.BaseURL = server.URL
-
-	mux.HandleFunc("/auth/tokens/aaa/policies/rrsets/bbb/", func(rw http.ResponseWriter, req *http.Request) {
-		if req.Method != http.MethodDelete {
-			http.Error(rw, "invalid method", http.StatusMethodNotAllowed)
-			return
-		}
-
+	mux.HandleFunc("DELETE /auth/tokens/aaa/policies/rrsets/bbb/", func(rw http.ResponseWriter, _ *http.Request) {
 		rw.WriteHeader(http.StatusNoContent)
 	})
 

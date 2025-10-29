@@ -3,47 +3,18 @@ package desec
 import (
 	"context"
 	"encoding/json"
-	"io"
 	"net/http"
-	"net/http/httptest"
-	"os"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestRecordsService_Create(t *testing.T) {
-	mux := http.NewServeMux()
-	server := httptest.NewServer(mux)
-	t.Cleanup(server.Close)
+	client, mux := setupTest(t, "token")
 
-	client := New("token", NewDefaultClientOptions())
-	client.BaseURL = server.URL
-
-	mux.HandleFunc("/domains/example.dedyn.io/rrsets/", func(rw http.ResponseWriter, req *http.Request) {
-		if req.Method != http.MethodPost {
-			http.Error(rw, "invalid method", http.StatusMethodNotAllowed)
-			return
-		}
-
-		rw.WriteHeader(http.StatusCreated)
-
-		file, err := os.Open("./fixtures/records_create.json")
-		if err != nil {
-			http.Error(rw, err.Error(), http.StatusInternalServerError)
-			return
-		}
-
-		defer func() { _ = file.Close() }()
-
-		_, err = io.Copy(rw, file)
-		if err != nil {
-			http.Error(rw, err.Error(), http.StatusInternalServerError)
-			return
-		}
-	})
+	mux.HandleFunc("POST /domains/example.dedyn.io/rrsets/",
+		fromFixtures("records_create.json", http.StatusCreated))
 
 	record := RRSet{
 		Name:    "",
@@ -71,21 +42,9 @@ func TestRecordsService_Create(t *testing.T) {
 }
 
 func TestRecordsService_Delete(t *testing.T) {
-	mux := http.NewServeMux()
-	server := httptest.NewServer(mux)
-	t.Cleanup(server.Close)
+	client, mux := setupTest(t, "token")
 
-	client := New("token", NewDefaultClientOptions())
-	client.BaseURL = server.URL
-
-	mux.HandleFunc("/domains/example.dedyn.io/rrsets/_acme-challenge/TXT/", func(rw http.ResponseWriter, req *http.Request) {
-		if req.Method != http.MethodDelete {
-			http.Error(rw, "invalid method", http.StatusMethodNotAllowed)
-			return
-		}
-
-		defer func() { _ = req.Body.Close() }()
-
+	mux.HandleFunc("DELETE /domains/example.dedyn.io/rrsets/_acme-challenge/TXT/", func(rw http.ResponseWriter, _ *http.Request) {
 		rw.WriteHeader(http.StatusNoContent)
 	})
 
@@ -94,33 +53,10 @@ func TestRecordsService_Delete(t *testing.T) {
 }
 
 func TestRecordsService_Get(t *testing.T) {
-	mux := http.NewServeMux()
-	server := httptest.NewServer(mux)
-	t.Cleanup(server.Close)
+	client, mux := setupTest(t, "token")
 
-	client := New("token", NewDefaultClientOptions())
-	client.BaseURL = server.URL
-
-	mux.HandleFunc("/domains/example.dedyn.io/rrsets/_acme-challenge/TXT/", func(rw http.ResponseWriter, req *http.Request) {
-		if req.Method != http.MethodGet {
-			http.Error(rw, "invalid method", http.StatusMethodNotAllowed)
-			return
-		}
-
-		file, err := os.Open("./fixtures/records_get.json")
-		if err != nil {
-			http.Error(rw, err.Error(), http.StatusInternalServerError)
-			return
-		}
-
-		defer func() { _ = file.Close() }()
-
-		_, err = io.Copy(rw, file)
-		if err != nil {
-			http.Error(rw, err.Error(), http.StatusInternalServerError)
-			return
-		}
-	})
+	mux.HandleFunc("GET /domains/example.dedyn.io/rrsets/_acme-challenge/TXT/",
+		fromFixtures("records_get.json", http.StatusOK))
 
 	record, err := client.Records.Get(context.Background(), "example.dedyn.io", "_acme-challenge", "TXT")
 	require.NoError(t, err)
@@ -139,33 +75,10 @@ func TestRecordsService_Get(t *testing.T) {
 }
 
 func TestRecordsService_Update(t *testing.T) {
-	mux := http.NewServeMux()
-	server := httptest.NewServer(mux)
-	t.Cleanup(server.Close)
+	client, mux := setupTest(t, "token")
 
-	client := New("token", NewDefaultClientOptions())
-	client.BaseURL = server.URL
-
-	mux.HandleFunc("/domains/example.dedyn.io/rrsets/_acme-challenge/TXT/", func(rw http.ResponseWriter, req *http.Request) {
-		if req.Method != http.MethodPatch {
-			http.Error(rw, "invalid method", http.StatusMethodNotAllowed)
-			return
-		}
-
-		file, err := os.Open("./fixtures/records_update.json")
-		if err != nil {
-			http.Error(rw, err.Error(), http.StatusInternalServerError)
-			return
-		}
-
-		defer func() { _ = file.Close() }()
-
-		_, err = io.Copy(rw, file)
-		if err != nil {
-			http.Error(rw, err.Error(), http.StatusInternalServerError)
-			return
-		}
-	})
+	mux.HandleFunc("PATCH /domains/example.dedyn.io/rrsets/_acme-challenge/TXT/",
+		fromFixtures("records_update.json", http.StatusOK))
 
 	rrSet := RRSet{
 		Records: []string{`"updated"`},
@@ -188,33 +101,10 @@ func TestRecordsService_Update(t *testing.T) {
 }
 
 func TestRecordsService_Replace(t *testing.T) {
-	mux := http.NewServeMux()
-	server := httptest.NewServer(mux)
-	t.Cleanup(server.Close)
+	client, mux := setupTest(t, "token")
 
-	client := New("token", NewDefaultClientOptions())
-	client.BaseURL = server.URL
-
-	mux.HandleFunc("/domains/example.dedyn.io/rrsets/_acme-challenge/TXT/", func(rw http.ResponseWriter, req *http.Request) {
-		if req.Method != http.MethodPut {
-			http.Error(rw, "invalid method", http.StatusMethodNotAllowed)
-			return
-		}
-
-		file, err := os.Open("./fixtures/records_replace.json")
-		if err != nil {
-			http.Error(rw, err.Error(), http.StatusInternalServerError)
-			return
-		}
-
-		defer func() { _ = file.Close() }()
-
-		_, err = io.Copy(rw, file)
-		if err != nil {
-			http.Error(rw, err.Error(), http.StatusInternalServerError)
-			return
-		}
-	})
+	mux.HandleFunc("PUT /domains/example.dedyn.io/rrsets/_acme-challenge/TXT/",
+		fromFixtures("records_replace.json", http.StatusOK))
 
 	rrSet := RRSet{
 		Name:    "_acme-challenge.example.dedyn.io.",
@@ -243,33 +133,10 @@ func TestRecordsService_Replace(t *testing.T) {
 }
 
 func TestRecordsService_GetAll(t *testing.T) {
-	mux := http.NewServeMux()
-	server := httptest.NewServer(mux)
-	t.Cleanup(server.Close)
+	client, mux := setupTest(t, "token")
 
-	client := New("token", NewDefaultClientOptions())
-	client.BaseURL = server.URL
-
-	mux.HandleFunc("/domains/example.dedyn.io/rrsets/", func(rw http.ResponseWriter, req *http.Request) {
-		if req.Method != http.MethodGet {
-			http.Error(rw, "invalid method", http.StatusMethodNotAllowed)
-			return
-		}
-
-		file, err := os.Open("./fixtures/records_getall.json")
-		if err != nil {
-			http.Error(rw, err.Error(), http.StatusInternalServerError)
-			return
-		}
-
-		defer func() { _ = file.Close() }()
-
-		_, err = io.Copy(rw, file)
-		if err != nil {
-			http.Error(rw, err.Error(), http.StatusInternalServerError)
-			return
-		}
-	})
+	mux.HandleFunc("GET /domains/example.dedyn.io/rrsets/",
+		fromFixtures("records_getall.json", http.StatusOK))
 
 	records, err := client.Records.GetAll(context.Background(), "example.dedyn.io", nil)
 	require.NoError(t, err)
@@ -300,35 +167,10 @@ func TestRecordsService_GetAll(t *testing.T) {
 }
 
 func TestRecordsService_BulkCreate(t *testing.T) {
-	mux := http.NewServeMux()
-	server := httptest.NewServer(mux)
-	t.Cleanup(server.Close)
+	client, mux := setupTest(t, "token")
 
-	client := New("token", NewDefaultClientOptions())
-	client.BaseURL = server.URL
-
-	mux.HandleFunc("/domains/example.dedyn.io/rrsets/", func(rw http.ResponseWriter, req *http.Request) {
-		if req.Method != http.MethodPost {
-			http.Error(rw, "invalid method", http.StatusMethodNotAllowed)
-			return
-		}
-
-		rw.WriteHeader(http.StatusCreated)
-
-		file, err := os.Open("./fixtures/records_create_bulk.json")
-		if err != nil {
-			http.Error(rw, err.Error(), http.StatusInternalServerError)
-			return
-		}
-
-		defer func() { _ = file.Close() }()
-
-		_, err = io.Copy(rw, file)
-		if err != nil {
-			http.Error(rw, err.Error(), http.StatusInternalServerError)
-			return
-		}
-	})
+	mux.HandleFunc("POST /domains/example.dedyn.io/rrsets/",
+		fromFixtures("records_create_bulk.json", http.StatusCreated))
 
 	rrSets := []RRSet{{
 		Name:    "",
@@ -355,34 +197,25 @@ func TestRecordsService_BulkCreate(t *testing.T) {
 }
 
 func TestRecordsService_BulkDelete(t *testing.T) {
-	mux := http.NewServeMux()
-	server := httptest.NewServer(mux)
-	t.Cleanup(server.Close)
+	client, mux := setupTest(t, "token")
 
-	client := New("token", NewDefaultClientOptions())
-	client.BaseURL = server.URL
+	mux.HandleFunc("PUT /domains/example.dedyn.io/rrsets/",
+		func(rw http.ResponseWriter, req *http.Request) {
+			defer func() { _ = req.Body.Close() }()
 
-	mux.HandleFunc("/domains/example.dedyn.io/rrsets/", func(rw http.ResponseWriter, req *http.Request) {
-		if req.Method != http.MethodPut {
-			http.Error(rw, "invalid method", http.StatusMethodNotAllowed)
-			return
-		}
+			var rrSets []RRSet
+			if err := json.NewDecoder(req.Body).Decode(&rrSets); err != nil {
+				http.Error(rw, "cannot unmarshal request body", http.StatusBadRequest)
+				return
+			}
 
-		defer func() { _ = req.Body.Close() }()
+			if len(rrSets) != 1 && rrSets[0].SubName != "_acme-challenge" && rrSets[0].Type != "TXT" && len(rrSets[0].Records) != 0 {
+				http.Error(rw, "incorrect request body", http.StatusBadRequest)
+				return
+			}
 
-		var rrSets []RRSet
-		if err := json.NewDecoder(req.Body).Decode(&rrSets); err != nil {
-			http.Error(rw, "cannot unmarshal request body", http.StatusBadRequest)
-			return
-		}
-
-		if len(rrSets) != 1 && rrSets[0].SubName != "_acme-challenge" && rrSets[0].Type != "TXT" && len(rrSets[0].Records) != 0 {
-			http.Error(rw, "incorrect request body", http.StatusBadRequest)
-			return
-		}
-
-		rw.WriteHeader(http.StatusOK)
-	})
+			rw.WriteHeader(http.StatusOK)
+		})
 
 	rrSets := []RRSet{{
 		Name:    "",
@@ -397,33 +230,10 @@ func TestRecordsService_BulkDelete(t *testing.T) {
 }
 
 func TestRecordsService_BulkUpdate(t *testing.T) {
-	mux := http.NewServeMux()
-	server := httptest.NewServer(mux)
-	t.Cleanup(server.Close)
+	client, mux := setupTest(t, "token")
 
-	client := New("token", NewDefaultClientOptions())
-	client.BaseURL = server.URL
-
-	mux.HandleFunc("/domains/example.dedyn.io/rrsets/", func(rw http.ResponseWriter, req *http.Request) {
-		if req.Method != http.MethodPut {
-			http.Error(rw, "invalid method", http.StatusMethodNotAllowed)
-			return
-		}
-
-		file, err := os.Open("./fixtures/records_update_bulk.json")
-		if err != nil {
-			http.Error(rw, err.Error(), http.StatusInternalServerError)
-			return
-		}
-
-		defer func() { _ = file.Close() }()
-
-		_, err = io.Copy(rw, file)
-		if err != nil {
-			http.Error(rw, err.Error(), http.StatusInternalServerError)
-			return
-		}
-	})
+	mux.HandleFunc("PUT /domains/example.dedyn.io/rrsets/",
+		fromFixtures("records_update_bulk.json", http.StatusOK))
 
 	rrSets := []RRSet{{
 		SubName: "_acme-challenge",
@@ -446,9 +256,4 @@ func TestRecordsService_BulkUpdate(t *testing.T) {
 		Touched: mustParseTime("2020-05-06T11:46:07.641885Z"),
 	}}
 	assert.Equal(t, expected, updatedRecord)
-}
-
-func mustParseTime(value string) *time.Time {
-	date, _ := time.Parse(time.RFC3339, value)
-	return &date
 }

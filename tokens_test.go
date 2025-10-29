@@ -2,10 +2,7 @@ package desec
 
 import (
 	"context"
-	"io"
 	"net/http"
-	"net/http/httptest"
-	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -13,35 +10,9 @@ import (
 )
 
 func TestTokensService_Create(t *testing.T) {
-	mux := http.NewServeMux()
-	server := httptest.NewServer(mux)
-	t.Cleanup(server.Close)
+	client, mux := setupTest(t, "token")
 
-	client := New("token", NewDefaultClientOptions())
-	client.BaseURL = server.URL
-
-	mux.HandleFunc("/auth/tokens/", func(rw http.ResponseWriter, req *http.Request) {
-		if req.Method != http.MethodPost {
-			http.Error(rw, "invalid method", http.StatusMethodNotAllowed)
-			return
-		}
-
-		rw.WriteHeader(http.StatusCreated)
-
-		file, err := os.Open("./fixtures/tokens_create.json")
-		if err != nil {
-			http.Error(rw, err.Error(), http.StatusInternalServerError)
-			return
-		}
-
-		defer func() { _ = file.Close() }()
-
-		_, err = io.Copy(rw, file)
-		if err != nil {
-			http.Error(rw, err.Error(), http.StatusInternalServerError)
-			return
-		}
-	})
+	mux.HandleFunc("POST /auth/tokens/", fromFixtures("tokens_create.json", http.StatusCreated))
 
 	newToken, err := client.Tokens.Create(context.Background(), "my new token")
 	require.NoError(t, err)
@@ -56,33 +27,9 @@ func TestTokensService_Create(t *testing.T) {
 }
 
 func TestTokensService_GetAll(t *testing.T) {
-	mux := http.NewServeMux()
-	server := httptest.NewServer(mux)
-	t.Cleanup(server.Close)
+	client, mux := setupTest(t, "token")
 
-	client := New("token", NewDefaultClientOptions())
-	client.BaseURL = server.URL
-
-	mux.HandleFunc("/auth/tokens/", func(rw http.ResponseWriter, req *http.Request) {
-		if req.Method != http.MethodGet {
-			http.Error(rw, "invalid method", http.StatusMethodNotAllowed)
-			return
-		}
-
-		file, err := os.Open("./fixtures/tokens_getall.json")
-		if err != nil {
-			http.Error(rw, err.Error(), http.StatusInternalServerError)
-			return
-		}
-
-		defer func() { _ = file.Close() }()
-
-		_, err = io.Copy(rw, file)
-		if err != nil {
-			http.Error(rw, err.Error(), http.StatusInternalServerError)
-			return
-		}
-	})
+	mux.HandleFunc("GET /auth/tokens/", fromFixtures("tokens_getall.json", http.StatusOK))
 
 	tokens, err := client.Tokens.GetAll(context.Background())
 	require.NoError(t, err)
@@ -118,33 +65,10 @@ func TestTokensService_GetAll(t *testing.T) {
 }
 
 func TestTokensService_Get(t *testing.T) {
-	mux := http.NewServeMux()
-	server := httptest.NewServer(mux)
-	t.Cleanup(server.Close)
+	client, mux := setupTest(t, "token")
 
-	client := New("token", NewDefaultClientOptions())
-	client.BaseURL = server.URL
-
-	mux.HandleFunc("/auth/tokens/3a6b94b5-d20e-40bd-a7cc-521f5c79fab3/", func(rw http.ResponseWriter, req *http.Request) {
-		if req.Method != http.MethodGet {
-			http.Error(rw, "invalid method", http.StatusMethodNotAllowed)
-			return
-		}
-
-		file, err := os.Open("./fixtures/tokens_get.json")
-		if err != nil {
-			http.Error(rw, err.Error(), http.StatusInternalServerError)
-			return
-		}
-
-		defer func() { _ = file.Close() }()
-
-		_, err = io.Copy(rw, file)
-		if err != nil {
-			http.Error(rw, err.Error(), http.StatusInternalServerError)
-			return
-		}
-	})
+	mux.HandleFunc("GET /auth/tokens/3a6b94b5-d20e-40bd-a7cc-521f5c79fab3/",
+		fromFixtures("tokens_get.json", http.StatusOK))
 
 	token, err := client.Tokens.Get(context.Background(), "3a6b94b5-d20e-40bd-a7cc-521f5c79fab3")
 	require.NoError(t, err)
@@ -168,33 +92,10 @@ func TestTokensService_Get(t *testing.T) {
 }
 
 func TestTokensService_Update(t *testing.T) {
-	mux := http.NewServeMux()
-	server := httptest.NewServer(mux)
-	t.Cleanup(server.Close)
+	client, mux := setupTest(t, "token")
 
-	client := New("token", NewDefaultClientOptions())
-	client.BaseURL = server.URL
-
-	mux.HandleFunc("/auth/tokens/3a6b94b5-d20e-40bd-a7cc-521f5c79fab3/", func(rw http.ResponseWriter, req *http.Request) {
-		if req.Method != http.MethodPatch {
-			http.Error(rw, "invalid method", http.StatusMethodNotAllowed)
-			return
-		}
-
-		file, err := os.Open("./fixtures/tokens_update.json")
-		if err != nil {
-			http.Error(rw, err.Error(), http.StatusInternalServerError)
-			return
-		}
-
-		defer func() { _ = file.Close() }()
-
-		_, err = io.Copy(rw, file)
-		if err != nil {
-			http.Error(rw, err.Error(), http.StatusInternalServerError)
-			return
-		}
-	})
+	mux.HandleFunc("PATCH /auth/tokens/3a6b94b5-d20e-40bd-a7cc-521f5c79fab3/",
+		fromFixtures("tokens_update.json", http.StatusOK))
 
 	token, err := client.Tokens.Update(context.Background(), "3a6b94b5-d20e-40bd-a7cc-521f5c79fab3", &Token{
 		PermCreateDomain: true,
@@ -223,19 +124,9 @@ func TestTokensService_Update(t *testing.T) {
 }
 
 func TestTokensService_Delete(t *testing.T) {
-	mux := http.NewServeMux()
-	server := httptest.NewServer(mux)
-	t.Cleanup(server.Close)
+	client, mux := setupTest(t, "token")
 
-	client := New("token", NewDefaultClientOptions())
-	client.BaseURL = server.URL
-
-	mux.HandleFunc("/auth/tokens/aaa/", func(rw http.ResponseWriter, req *http.Request) {
-		if req.Method != http.MethodDelete {
-			http.Error(rw, "invalid method", http.StatusMethodNotAllowed)
-			return
-		}
-
+	mux.HandleFunc("DELETE /auth/tokens/aaa/", func(rw http.ResponseWriter, _ *http.Request) {
 		rw.WriteHeader(http.StatusNoContent)
 	})
 

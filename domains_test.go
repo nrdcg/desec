@@ -2,10 +2,7 @@ package desec
 
 import (
 	"context"
-	"io"
 	"net/http"
-	"net/http/httptest"
-	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -13,35 +10,9 @@ import (
 )
 
 func TestDomainsService_Create(t *testing.T) {
-	mux := http.NewServeMux()
-	server := httptest.NewServer(mux)
-	t.Cleanup(server.Close)
+	client, mux := setupTest(t, "token")
 
-	client := New("token", NewDefaultClientOptions())
-	client.BaseURL = server.URL
-
-	mux.HandleFunc("/domains/", func(rw http.ResponseWriter, req *http.Request) {
-		if req.Method != http.MethodPost {
-			http.Error(rw, "invalid method", http.StatusMethodNotAllowed)
-			return
-		}
-
-		rw.WriteHeader(http.StatusCreated)
-
-		file, err := os.Open("./fixtures/domains_create.json")
-		if err != nil {
-			http.Error(rw, err.Error(), http.StatusInternalServerError)
-			return
-		}
-
-		defer func() { _ = file.Close() }()
-
-		_, err = io.Copy(rw, file)
-		if err != nil {
-			http.Error(rw, err.Error(), http.StatusInternalServerError)
-			return
-		}
-	})
+	mux.HandleFunc("POST /domains/", fromFixtures("domains_create.json", http.StatusCreated))
 
 	newDomain, err := client.Domains.Create(context.Background(), "example.com")
 	require.NoError(t, err)
@@ -70,19 +41,9 @@ func TestDomainsService_Create(t *testing.T) {
 }
 
 func TestDomainsService_Delete(t *testing.T) {
-	mux := http.NewServeMux()
-	server := httptest.NewServer(mux)
-	t.Cleanup(server.Close)
+	client, mux := setupTest(t, "token")
 
-	client := New("token", NewDefaultClientOptions())
-	client.BaseURL = server.URL
-
-	mux.HandleFunc("/domains/example.com/", func(rw http.ResponseWriter, req *http.Request) {
-		if req.Method != http.MethodDelete {
-			http.Error(rw, "invalid method", http.StatusMethodNotAllowed)
-			return
-		}
-
+	mux.HandleFunc("DELETE /domains/example.com/", func(rw http.ResponseWriter, _ *http.Request) {
 		rw.WriteHeader(http.StatusNoContent)
 	})
 
@@ -91,33 +52,9 @@ func TestDomainsService_Delete(t *testing.T) {
 }
 
 func TestDomainsService_Get(t *testing.T) {
-	mux := http.NewServeMux()
-	server := httptest.NewServer(mux)
-	t.Cleanup(server.Close)
+	client, mux := setupTest(t, "token")
 
-	client := New("token", NewDefaultClientOptions())
-	client.BaseURL = server.URL
-
-	mux.HandleFunc("/domains/example.com/", func(rw http.ResponseWriter, req *http.Request) {
-		if req.Method != http.MethodGet {
-			http.Error(rw, "invalid method", http.StatusMethodNotAllowed)
-			return
-		}
-
-		file, err := os.Open("./fixtures/domains_get.json")
-		if err != nil {
-			http.Error(rw, err.Error(), http.StatusInternalServerError)
-			return
-		}
-
-		defer func() { _ = file.Close() }()
-
-		_, err = io.Copy(rw, file)
-		if err != nil {
-			http.Error(rw, err.Error(), http.StatusInternalServerError)
-			return
-		}
-	})
+	mux.HandleFunc("GET /domains/example.com/", fromFixtures("domains_get.json", http.StatusOK))
 
 	domain, err := client.Domains.Get(context.Background(), "example.com")
 	require.NoError(t, err)
@@ -146,37 +83,15 @@ func TestDomainsService_Get(t *testing.T) {
 }
 
 func TestDomainsService_GetResponsible(t *testing.T) {
-	mux := http.NewServeMux()
-	server := httptest.NewServer(mux)
-	t.Cleanup(server.Close)
+	client, mux := setupTest(t, "token")
 
-	client := New("token", NewDefaultClientOptions())
-	client.BaseURL = server.URL
-
-	mux.HandleFunc("/domains/", func(rw http.ResponseWriter, req *http.Request) {
-		if req.Method != http.MethodGet {
-			http.Error(rw, "invalid method", http.StatusMethodNotAllowed)
-			return
-		}
-
+	mux.HandleFunc("GET /domains/", func(rw http.ResponseWriter, req *http.Request) {
 		if req.URL.Query().Get("owns_qname") != "git.dev.example.org" {
 			http.Error(rw, "owns_qname not passed correctly", http.StatusBadRequest)
 			return
 		}
 
-		file, err := os.Open("./fixtures/domains_getresponsible.json")
-		if err != nil {
-			http.Error(rw, err.Error(), http.StatusInternalServerError)
-			return
-		}
-
-		defer func() { _ = file.Close() }()
-
-		_, err = io.Copy(rw, file)
-		if err != nil {
-			http.Error(rw, err.Error(), http.StatusInternalServerError)
-			return
-		}
+		fromFixtures("domains_getresponsible.json", http.StatusOK).ServeHTTP(rw, req)
 	})
 
 	domain, err := client.Domains.GetResponsible(context.Background(), "git.dev.example.org")
@@ -193,19 +108,9 @@ func TestDomainsService_GetResponsible(t *testing.T) {
 }
 
 func TestDomainsService_GetResponsible_error(t *testing.T) {
-	mux := http.NewServeMux()
-	server := httptest.NewServer(mux)
-	t.Cleanup(server.Close)
+	client, mux := setupTest(t, "token")
 
-	client := New("token", NewDefaultClientOptions())
-	client.BaseURL = server.URL
-
-	mux.HandleFunc("/domains/", func(rw http.ResponseWriter, req *http.Request) {
-		if req.Method != http.MethodGet {
-			http.Error(rw, "invalid method", http.StatusMethodNotAllowed)
-			return
-		}
-
+	mux.HandleFunc("GET /domains/", func(rw http.ResponseWriter, _ *http.Request) {
 		_, _ = rw.Write([]byte("[]"))
 	})
 
@@ -217,33 +122,9 @@ func TestDomainsService_GetResponsible_error(t *testing.T) {
 }
 
 func TestDomainsService_GetAll(t *testing.T) {
-	mux := http.NewServeMux()
-	server := httptest.NewServer(mux)
-	t.Cleanup(server.Close)
+	client, mux := setupTest(t, "token")
 
-	client := New("token", NewDefaultClientOptions())
-	client.BaseURL = server.URL
-
-	mux.HandleFunc("/domains/", func(rw http.ResponseWriter, req *http.Request) {
-		if req.Method != http.MethodGet {
-			http.Error(rw, "invalid method", http.StatusMethodNotAllowed)
-			return
-		}
-
-		file, err := os.Open("./fixtures/domains_getall.json")
-		if err != nil {
-			http.Error(rw, err.Error(), http.StatusInternalServerError)
-			return
-		}
-
-		defer func() { _ = file.Close() }()
-
-		_, err = io.Copy(rw, file)
-		if err != nil {
-			http.Error(rw, err.Error(), http.StatusInternalServerError)
-			return
-		}
-	})
+	mux.HandleFunc("GET /domains/", fromFixtures("domains_getall.json", http.StatusOK))
 
 	domains, err := client.Domains.GetAll(context.Background())
 	require.NoError(t, err)

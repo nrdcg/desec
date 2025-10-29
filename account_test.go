@@ -2,10 +2,7 @@ package desec
 
 import (
 	"context"
-	"io"
 	"net/http"
-	"net/http/httptest"
-	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -13,33 +10,9 @@ import (
 )
 
 func TestAccountClient_ObtainCaptcha(t *testing.T) {
-	mux := http.NewServeMux()
-	server := httptest.NewServer(mux)
-	t.Cleanup(server.Close)
+	client, mux := setupTest(t, "")
 
-	client := New("", NewDefaultClientOptions())
-	client.BaseURL = server.URL
-
-	mux.HandleFunc("/captcha/", func(rw http.ResponseWriter, req *http.Request) {
-		if req.Method != http.MethodPost {
-			http.Error(rw, "invalid method", http.StatusMethodNotAllowed)
-			return
-		}
-
-		file, err := os.Open("./fixtures/accounts_captcha.json")
-		if err != nil {
-			http.Error(rw, err.Error(), http.StatusInternalServerError)
-			return
-		}
-
-		defer func() { _ = file.Close() }()
-
-		_, err = io.Copy(rw, file)
-		if err != nil {
-			http.Error(rw, err.Error(), http.StatusInternalServerError)
-			return
-		}
-	})
+	mux.HandleFunc("POST /captcha/", fromFixtures("accounts_captcha.json", http.StatusOK))
 
 	captcha, err := client.Account.ObtainCaptcha(context.Background())
 	require.NoError(t, err)
@@ -52,19 +25,9 @@ func TestAccountClient_ObtainCaptcha(t *testing.T) {
 }
 
 func TestAccountClient_Register(t *testing.T) {
-	mux := http.NewServeMux()
-	server := httptest.NewServer(mux)
-	t.Cleanup(server.Close)
+	client, mux := setupTest(t, "")
 
-	client := New("", NewDefaultClientOptions())
-	client.BaseURL = server.URL
-
-	mux.HandleFunc("/auth/", func(rw http.ResponseWriter, req *http.Request) {
-		if req.Method != http.MethodPost {
-			http.Error(rw, "invalid method", http.StatusMethodNotAllowed)
-			return
-		}
-
+	mux.HandleFunc("POST /auth/", func(rw http.ResponseWriter, _ *http.Request) {
 		rw.WriteHeader(http.StatusAccepted)
 	})
 
@@ -82,33 +45,9 @@ func TestAccountClient_Register(t *testing.T) {
 }
 
 func TestAccountClient_Login(t *testing.T) {
-	mux := http.NewServeMux()
-	server := httptest.NewServer(mux)
-	t.Cleanup(server.Close)
+	client, mux := setupTest(t, "")
 
-	client := New("", NewDefaultClientOptions())
-	client.BaseURL = server.URL
-
-	mux.HandleFunc("/auth/login/", func(rw http.ResponseWriter, req *http.Request) {
-		if req.Method != http.MethodPost {
-			http.Error(rw, "invalid method", http.StatusMethodNotAllowed)
-			return
-		}
-
-		file, err := os.Open("./fixtures/accounts_login.json")
-		if err != nil {
-			http.Error(rw, err.Error(), http.StatusInternalServerError)
-			return
-		}
-
-		defer func() { _ = file.Close() }()
-
-		_, err = io.Copy(rw, file)
-		if err != nil {
-			http.Error(rw, err.Error(), http.StatusInternalServerError)
-			return
-		}
-	})
+	mux.HandleFunc("POST /auth/login/", fromFixtures("accounts_login.json", http.StatusOK))
 
 	token, err := client.Account.Login(context.Background(), "email@example.com", "secret")
 	require.NoError(t, err)
@@ -125,19 +64,9 @@ func TestAccountClient_Login(t *testing.T) {
 }
 
 func TestAccountClient_Logout(t *testing.T) {
-	mux := http.NewServeMux()
-	server := httptest.NewServer(mux)
-	t.Cleanup(server.Close)
+	client, mux := setupTest(t, "f07Q0TRmEb-CRWPe4h64_iV2jbet")
 
-	client := New("f07Q0TRmEb-CRWPe4h64_iV2jbet", NewDefaultClientOptions())
-	client.BaseURL = server.URL
-
-	mux.HandleFunc("/auth/logout/", func(rw http.ResponseWriter, req *http.Request) {
-		if req.Method != http.MethodPost {
-			http.Error(rw, "invalid method", http.StatusMethodNotAllowed)
-			return
-		}
-
+	mux.HandleFunc("POST /auth/logout/", func(rw http.ResponseWriter, _ *http.Request) {
 		rw.WriteHeader(http.StatusNoContent)
 	})
 
@@ -148,33 +77,9 @@ func TestAccountClient_Logout(t *testing.T) {
 }
 
 func TestAccountClient_RetrieveInformation(t *testing.T) {
-	mux := http.NewServeMux()
-	server := httptest.NewServer(mux)
-	t.Cleanup(server.Close)
+	client, mux := setupTest(t, "f07Q0TRmEb-CRWPe4h64_iV2jbet")
 
-	client := New("f07Q0TRmEb-CRWPe4h64_iV2jbet", NewDefaultClientOptions())
-	client.BaseURL = server.URL
-
-	mux.HandleFunc("/auth/account/", func(rw http.ResponseWriter, req *http.Request) {
-		if req.Method != http.MethodPost {
-			http.Error(rw, "invalid method", http.StatusMethodNotAllowed)
-			return
-		}
-
-		file, err := os.Open("./fixtures/accounts_retrieve.json")
-		if err != nil {
-			http.Error(rw, err.Error(), http.StatusInternalServerError)
-			return
-		}
-
-		defer func() { _ = file.Close() }()
-
-		_, err = io.Copy(rw, file)
-		if err != nil {
-			http.Error(rw, err.Error(), http.StatusInternalServerError)
-			return
-		}
-	})
+	mux.HandleFunc("POST /auth/account/", fromFixtures("accounts_retrieve.json", http.StatusOK))
 
 	account, err := client.Account.RetrieveInformation(context.Background())
 	require.NoError(t, err)
@@ -188,19 +93,9 @@ func TestAccountClient_RetrieveInformation(t *testing.T) {
 }
 
 func TestAccountClient_PasswordReset(t *testing.T) {
-	mux := http.NewServeMux()
-	server := httptest.NewServer(mux)
-	t.Cleanup(server.Close)
+	client, mux := setupTest(t, "")
 
-	client := New("", NewDefaultClientOptions())
-	client.BaseURL = server.URL
-
-	mux.HandleFunc("/", func(rw http.ResponseWriter, req *http.Request) {
-		if req.Method != http.MethodPost {
-			http.Error(rw, "invalid method", http.StatusMethodNotAllowed)
-			return
-		}
-
+	mux.HandleFunc("POST /", func(rw http.ResponseWriter, _ *http.Request) {
 		rw.WriteHeader(http.StatusAccepted)
 	})
 
@@ -214,19 +109,9 @@ func TestAccountClient_PasswordReset(t *testing.T) {
 }
 
 func TestAccountClient_ChangeEmail(t *testing.T) {
-	mux := http.NewServeMux()
-	server := httptest.NewServer(mux)
-	t.Cleanup(server.Close)
+	client, mux := setupTest(t, "")
 
-	client := New("", NewDefaultClientOptions())
-	client.BaseURL = server.URL
-
-	mux.HandleFunc("/", func(rw http.ResponseWriter, req *http.Request) {
-		if req.Method != http.MethodPost {
-			http.Error(rw, "invalid method", http.StatusMethodNotAllowed)
-			return
-		}
-
+	mux.HandleFunc("POST /", func(rw http.ResponseWriter, _ *http.Request) {
 		rw.WriteHeader(http.StatusAccepted)
 	})
 
@@ -235,19 +120,9 @@ func TestAccountClient_ChangeEmail(t *testing.T) {
 }
 
 func TestAccountClient_Delete(t *testing.T) {
-	mux := http.NewServeMux()
-	server := httptest.NewServer(mux)
-	t.Cleanup(server.Close)
+	client, mux := setupTest(t, "")
 
-	client := New("", NewDefaultClientOptions())
-	client.BaseURL = server.URL
-
-	mux.HandleFunc("/auth/account/delete/", func(rw http.ResponseWriter, req *http.Request) {
-		if req.Method != http.MethodPost {
-			http.Error(rw, "invalid method", http.StatusMethodNotAllowed)
-			return
-		}
-
+	mux.HandleFunc("POST /auth/account/delete/", func(rw http.ResponseWriter, _ *http.Request) {
 		rw.WriteHeader(http.StatusAccepted)
 	})
 
