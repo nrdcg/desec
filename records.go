@@ -19,7 +19,7 @@ const IgnoreFilter = "#IGNORE#"
 type RRSet struct {
 	Name    string     `json:"name,omitempty"`
 	Domain  string     `json:"domain,omitempty"`
-	SubName string     `json:"subname,omitempty"`
+	SubName string     `json:"subname"`
 	Type    string     `json:"type,omitempty"`
 	Records []string   `json:"records"`
 	TTL     int        `json:"ttl,omitempty"`
