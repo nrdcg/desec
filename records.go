@@ -19,6 +19,18 @@ const IgnoreFilter = "#IGNORE#"
 type RRSet struct {
 	Name    string     `json:"name,omitempty"`
 	Domain  string     `json:"domain,omitempty"`
+	SubName string     `json:"subname,omitempty"`
+	Type    string     `json:"type,omitempty"`
+	Records []string   `json:"records"`
+	TTL     int        `json:"ttl,omitempty"`
+	Created *time.Time `json:"created,omitempty"`
+	Touched *time.Time `json:"touched,omitempty"`
+}
+
+// The field `subname` doesn't have the same behavior when creating or updating an RRSet.
+type rrsetCreate struct {
+	Name    string     `json:"name,omitempty"`
+	Domain  string     `json:"domain,omitempty"`
 	SubName string     `json:"subname"`
 	Type    string     `json:"type,omitempty"`
 	Records []string   `json:"records"`
@@ -145,7 +157,9 @@ func (s *RecordsService) Create(ctx context.Context, rrSet RRSet) (*RRSet, error
 		return nil, fmt.Errorf("failed to create endpoint: %w", err)
 	}
 
-	req, err := s.client.newRequest(ctx, http.MethodPost, endpoint, rrSet)
+	rrsc := rrsetCreate(rrSet)
+
+	req, err := s.client.newRequest(ctx, http.MethodPost, endpoint, rrsc)
 	if err != nil {
 		return nil, err
 	}
@@ -352,7 +366,12 @@ func (s *RecordsService) BulkCreate(ctx context.Context, domainName string, rrSe
 		return nil, fmt.Errorf("failed to create endpoint: %w", err)
 	}
 
-	req, err := s.client.newRequest(ctx, http.MethodPost, endpoint, rrSets)
+	var rrscs []rrsetCreate
+	for _, rrSet := range rrSets {
+		rrscs = append(rrscs, rrsetCreate(rrSet))
+	}
+
+	req, err := s.client.newRequest(ctx, http.MethodPost, endpoint, rrscs)
 	if err != nil {
 		return nil, err
 	}
